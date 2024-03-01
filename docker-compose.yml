@@ -1,0 +1,84 @@
+version: '3.9'
+networks:
+  isolation-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
+    networks:
+      isolation-network:
+        ipv4_address: 10.5.0.251
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: broker
+    ports:
+      - "9092:9092"
+    networks:
+      isolation-network:
+        ipv4_address: 10.5.0.250
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  pg-ates:
+    container_name: pg-ates
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: p@ssw0rd
+      POSTGRES_DB: ates
+    ports:
+      - "5432:5432"
+    networks:
+      isolation-network:
+        ipv4_address: 10.5.0.255
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  auth:
+    container_name: pg-auth
+    networks:
+      - isolation-network
+    build:
+      context: .
+      dockerfile: Auth/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "6000:6000"
+    depends_on:
+      - pg-ates
+
+  tasks:
+    container_name: pg-tasks
+    networks:
+      - isolation-network
+    build:
+      context: .
+      dockerfile: Tasks/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "6001:6001"
+    depends_on:
+      - pg-ates
+
+volumes:
+  postgres-data:
