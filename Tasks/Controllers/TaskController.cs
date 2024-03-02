@@ -1,5 +1,6 @@
 using Confluent.Kafka;
 using Core;
+using Core.Enums;
 using Core.EventModels;
 using Core.Extensions;
 using Core.Kafka;
@@ -43,8 +44,10 @@ public class TaskController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
 
-        var task = await _taskRepository.Create(model, cancellationToken);
+        var task = await _taskRepository.Create(model, poPugId, cancellationToken);
         if (task == null)
             return BadRequest("task not created");
         
@@ -52,8 +55,7 @@ public class TaskController : ControllerBase
         {
             PublicId = task.Ulid,
             Description = model.Description,
-            Lose = task.Lose,
-            Reward = task.Reward
+            PoPugId = poPugId,
         }.Decode();
             
         _producer.Produce(
@@ -67,6 +69,7 @@ public class TaskController : ControllerBase
         return Ok();
     }
 
+    [AuthorizeRoles(RoleEnum.Admin, RoleEnum.Manager)]
     [HttpPost("[action]")]
     public async Task<IActionResult> Shuffled(CancellationToken cancellationToken)
     {
@@ -79,12 +82,16 @@ public class TaskController : ControllerBase
         var tasks = await _taskRepository.GetAllOpen(cancellationToken);
         foreach (var task in tasks)
         {
+            var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
+            await _taskRepository.Assign(task.Id, poPugId, cancellationToken);
+
             await AssignTask(userName, task, cancellationToken);
         }
         
         return Ok();
     }
 
+    [AuthorizeRoles(RoleEnum.PoPug, RoleEnum.Developer)]
     [HttpPut("[action]/{id}")]
     public async Task<IActionResult> Completed(long id, CancellationToken cancellationToken)
     {
@@ -107,14 +114,10 @@ public class TaskController : ControllerBase
 
     private async Task AssignTask(string identityName, TaskDto task, CancellationToken cancellationToken)
     {
-        var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
-        
-        await _taskRepository.Assign(task.Id, poPugId, cancellationToken);
-        
         var taskAssigned = new TaskAssignedEventModel
         {
             PublicTaskId = task.Ulid,
-            PublicPoPugId = poPugId
+            PublicPoPugId = task.PoPugId
         }.Decode();
         
         _producer.Produce(

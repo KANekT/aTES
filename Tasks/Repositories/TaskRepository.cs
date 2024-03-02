@@ -11,14 +11,15 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
        
     }
 
-    public async Task<TaskDto?> Create(TaskCreateFormModel model, CancellationToken cancellationToken)
+    public async Task<TaskDto?> Create(TaskCreateFormModel model, string poPugId, CancellationToken cancellationToken)
     {
         var taskDto = new TaskDto
         {
             Ulid = Ulid.NewUlid().ToString(),
             CreatedAt = DateTime.UtcNow,
             EditedAt = DateTime.UtcNow,
-            Description = model.Description
+            Description = model.Description,
+            PoPugId = poPugId
         };
         var taskAdd = await Add(taskDto, cancellationToken);
         return taskAdd ? taskDto : null;

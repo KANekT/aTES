@@ -5,7 +5,7 @@ using Core.Enums;
 namespace Tasks.Models;
 
 [Table("Tasks", Schema = "Tasks")]
-public record TaskDto: TaskPrice
+public record TaskDto
 {
     [Column(nameof(Id)), Key]
     public long Id { get; set; }
