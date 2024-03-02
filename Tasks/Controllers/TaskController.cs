@@ -34,6 +34,21 @@ public class TaskController : ControllerBase
     }
 
     [HttpPost("[action]")]
+    public async Task<IActionResult> My(
+        CancellationToken cancellationToken
+    )
+    {
+        var userName = CheckUser();
+        if (string.IsNullOrEmpty(userName))
+        {
+            return Unauthorized();
+        }
+
+        var tasks = await _taskRepository.My(userName, cancellationToken);
+        return Ok(tasks);
+    }
+    
+    [HttpPost("[action]")]
     public async Task<IActionResult> Create(
         [FromBody] TaskCreateFormModel model,
         CancellationToken cancellationToken

@@ -8,4 +8,5 @@ public interface ITaskRepository
     public Task<string> Completed(long id, string userPublicId, CancellationToken cancellationToken);
     public Task Assign(long id, string userPublicId, CancellationToken cancellationToken);
     public Task<TaskDto[]> GetAllOpen(CancellationToken cancellationToken);
+    public Task<TaskDto[]> My(string userPublicId, CancellationToken cancellationToken);
 }

@@ -67,4 +67,11 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
 
         return tasks.Where(x => x.Status == StatusEnum.Open).ToArray();
     }
+
+    public async Task<TaskDto[]> My(string userPublicId, CancellationToken cancellationToken)
+    {
+        var tasks = await GetAll(cancellationToken);
+
+        return tasks.Where(x => x.PoPugId == userPublicId).ToArray();
+    }
 }
