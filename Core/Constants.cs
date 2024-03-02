@@ -1,5 +1,3 @@
-using Core.Enums;
-
 namespace Core;
 
 /// <summary>
@@ -15,10 +13,5 @@ public static class Constants
         public const string TaskCreatedStream = "task_created_stream";
         public const string TaskAssigned = "task_assigned_be";
         public const string TaskCompleted = "task_completed_be";
-    }
-    
-    public static class Roles
-    {
-        public static readonly string Admin = RoleEnum.Admin.ToString();
     }
 }
