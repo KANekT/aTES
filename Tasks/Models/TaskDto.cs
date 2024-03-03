@@ -10,7 +10,7 @@ public record TaskDto
     [Column(nameof(Id)), Key]
     public long Id { get; set; }
     [Column(nameof(Ulid))]
-    public string Ulid { get; set; }
+    public string Ulid { get; set; } = new Ulid().ToString();
     [Column(nameof(CreatedAt))]
     public DateTime CreatedAt { get; set; }
     [Column(nameof(EditedAt))]

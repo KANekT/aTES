@@ -12,7 +12,7 @@ public class AddTransactionTable : Migration
             .WithColumn(nameof(TransactionDto.Id)).AsInt64().PrimaryKey().Identity()
             .WithColumn(nameof(TransactionDto.Ulid)).AsString().NotNullable()
             .WithColumn(nameof(TransactionDto.CreatedAt)).AsDateTime().WithDefault(SystemMethods.CurrentUTCDateTime)
-            .WithColumn(nameof(TransactionDto.Status)).AsByte().NotNullable()
+            .WithColumn(nameof(TransactionDto.Type)).AsByte().NotNullable()
             .WithColumn(nameof(TransactionDto.PoPugId)).AsString().NotNullable()
             .WithColumn(nameof(TransactionDto.Money)).AsCurrency().NotNullable()
             ;

@@ -11,8 +11,18 @@ public class TransactionRepository : GenericRepository<TransactionDto>, ITransac
 
     }
 
-    public Task<TransactionDto?> Create(string publicId, RoleEnum role, CancellationToken cancellationToken)
+    public async Task<TransactionDto?> Create(string publicId, TransactionTypeEnum type, decimal money, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var transactionDto = new TransactionDto
+        {
+            CreatedAt = DateTime.UtcNow,
+            EditedAt = DateTime.UtcNow,
+            Type = type,
+            PoPugId = publicId,
+            Money = money,
+        };
+        
+        var transactionAdd = await Add(transactionDto, cancellationToken);
+        return transactionAdd ? transactionDto : null;
     }
 }

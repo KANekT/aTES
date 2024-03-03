@@ -15,7 +15,6 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
     {
         var taskDto = new TaskDto
         {
-            Ulid = Ulid.NewUlid().ToString(),
             CreatedAt = DateTime.UtcNow,
             EditedAt = DateTime.UtcNow,
             Description = model.Description,
@@ -26,9 +25,8 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
     }
 
     public async Task<string> Completed(long id, string userPublicId, CancellationToken cancellationToken)
-    {
-        var tasks = await GetAll(cancellationToken);
-        var task = tasks.FirstOrDefault(x => x.Id == id);
+    { 
+        var task = await GetByKey(id, cancellationToken);
         if (task == null)
         {
             throw new Exception("task is not exits");
@@ -48,8 +46,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
 
     public async Task Assign(long id, string userPublicId, CancellationToken cancellationToken)
     {
-        var tasks = await GetAll(cancellationToken);
-        var task = tasks.FirstOrDefault(x => x.Id == id);
+        var task = await GetByKey(id, cancellationToken);
         if (task == null)
         {
             throw new Exception("task is not exits");

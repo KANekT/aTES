@@ -13,12 +13,12 @@ public class UserRepository : GenericRepository<UserDto>, IUserRepository
 
     public async Task<UserDto?> Create(string publicId, RoleEnum role, CancellationToken cancellationToken)
     {
-        var users = await GetAll(cancellationToken);
-        var user = users.FirstOrDefault(x => x.Ulid == publicId);
+        var user = await GetByPublicId(publicId, cancellationToken);
         if (user != null)
         {
             throw new Exception("user is exits");
         }
+
         var userDto = new UserDto
         {
             Ulid = publicId,
@@ -30,14 +30,25 @@ public class UserRepository : GenericRepository<UserDto>, IUserRepository
 
     public async Task RoleChange(string publicId, RoleEnum role, CancellationToken cancellationToken)
     {
-        var users = await GetAll(cancellationToken);
-        var user = users.FirstOrDefault(x => x.Ulid == publicId);
+        var user = await GetByPublicId(publicId, cancellationToken);
         if (user == null)
         {
             throw new Exception("user is not exits");
         }
         
         user.Role = role;
+        await Update(user, cancellationToken);
+    }
+
+    public async Task UpdateBalance(string publicId, decimal money, CancellationToken cancellationToken)
+    {
+        var user = await GetByPublicId(publicId, cancellationToken);
+        if (user == null)
+        {
+            throw new Exception("user is not exits");
+        }
+
+        user.Balance += money;
         await Update(user, cancellationToken);
     }
 }

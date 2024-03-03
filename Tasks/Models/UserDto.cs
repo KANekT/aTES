@@ -10,7 +10,7 @@ public record UserDto
     [Column(nameof(Id)), Key]
     public long Id { get; set; }
     [Column(nameof(Ulid))]
-    public string Ulid { get; set; }
+    public string Ulid { get; set; } = new Ulid().ToString();
     [Column(nameof(Role))]
     public RoleEnum Role { get; set; }
 }

@@ -21,7 +21,6 @@ public class UserRepository : GenericRepository<UserDto>, IUserRepository
     {
         var userDto = new UserDto
         {
-            Ulid = Ulid.NewUlid().ToString(),
             CreatedAt = DateTime.UtcNow,
             Login = model.Login,
             UserName = model.UserName,
@@ -39,11 +38,5 @@ public class UserRepository : GenericRepository<UserDto>, IUserRepository
             user.Role = role;
             await Update(user, cancellationToken);
         }
-    }
-
-    private async Task<UserDto?> GetByPublicId(string login, CancellationToken cancellationToken)
-    {
-        var users = await GetAll(cancellationToken);
-        return users.FirstOrDefault(x => x.Ulid == login);
     }
 }

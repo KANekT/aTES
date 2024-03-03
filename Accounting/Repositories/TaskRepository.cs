@@ -11,7 +11,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
        
     }
 
-    public async Task<TaskDto?> Create(TaskCreatedEventModel model, string poPugId, CancellationToken cancellationToken)
+    public async Task<TaskDto?> Create(TaskCreatedEventModel model, CancellationToken cancellationToken)
     {
         var taskDto = new TaskDto
         {
@@ -19,7 +19,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
             CreatedAt = DateTime.UtcNow,
             EditedAt = DateTime.UtcNow,
             Description = model.Description,
-            PoPugId = poPugId
+            PoPugId = model.PoPugId
         };
         var taskAdd = await Add(taskDto, cancellationToken);
         return taskAdd ? taskDto : null;

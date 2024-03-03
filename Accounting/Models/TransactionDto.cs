@@ -9,15 +9,14 @@ public class TransactionDto
 {
     [Column(nameof(Id)), Key]
     public long Id { get; set; }
-    [Column(nameof(Ulid))]
-    public string Ulid { get; set; }
-
+    [Column(nameof(Ulid))] 
+    public string Ulid { get; set; } = new Ulid().ToString();
     [Column(nameof(CreatedAt))]
     public DateTime CreatedAt { get; set; }
     [Column(nameof(EditedAt))]
     public DateTime EditedAt { get; set; }
-    [Column(nameof(Status))]
-    public TransactionStatusEnum Status { get; set; }
+    [Column(nameof(System.Type))]
+    public TransactionTypeEnum Type { get; set; }
     [Column(nameof(PoPugId))]
     public string PoPugId { get; set; } = string.Empty;
     [Column(nameof(Money))]
