@@ -34,7 +34,6 @@ public class TaskAssignedConsumer : BaseConsumer<string, string>
         }
         
         var money = -1 * taskDto.Lose;
-        
         await _transactionRepository.Create(task.PublicPoPugId, TransactionTypeEnum.Enrollment, money, cancellationToken);
 
         await _userRepository.UpdateBalance(task.PublicPoPugId, money, cancellationToken);

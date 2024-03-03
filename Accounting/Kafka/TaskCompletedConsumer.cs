@@ -33,7 +33,7 @@ public class TaskCompletedConsumer : BaseConsumer<string, string>
         }
 
         var money = taskDto.Reward;
-        await _transactionRepository.Create(poPugId, TransactionTypeEnum.Init, money, cancellationToken);
+        await _transactionRepository.Create(poPugId, TransactionTypeEnum.Withdrawal, money, cancellationToken);
 
         await _userRepository.UpdateBalance(poPugId, money, cancellationToken);
     }
