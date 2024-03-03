@@ -74,7 +74,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         return result;
     }
 
-    public async Task<T?> GetById(int id, CancellationToken ctx)
+    public async Task<T?> GetByKey(int id, CancellationToken ctx)
     {
         IEnumerable<T> result = Array.Empty<T>();
         try
@@ -93,6 +93,25 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         return result.FirstOrDefault();
     }
 
+    public async Task<T?> GetByPublicId(string id, CancellationToken ctx)
+    {
+        IEnumerable<T> result = Array.Empty<T>();
+        try
+        {
+            var (schemaName, tableName) = GetSchemaTableName();
+            var keyColumn = "Ulid";
+            var query     = $"SELECT * FROM {schemaName}.{tableName} WHERE \"{keyColumn}\" = '{id}'";
+
+            result = await _connection.QueryAsync<T>(query);
+        }
+        catch (Exception ex)
+        {
+            // ignored
+        }
+
+        return result.FirstOrDefault();
+    }
+    
     public async Task<bool> Update(T entity, CancellationToken ctx)
     {
         var rowsEffected = 0;
