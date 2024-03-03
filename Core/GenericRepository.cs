@@ -74,7 +74,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         return result;
     }
 
-    public async Task<T?> GetByKey(int id, CancellationToken ctx)
+    public async Task<T?> GetByKey(long id, CancellationToken ctx)
     {
         IEnumerable<T> result = Array.Empty<T>();
         try

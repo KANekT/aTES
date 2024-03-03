@@ -25,9 +25,8 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
     }
 
     public async Task<string> Completed(long id, string userPublicId, CancellationToken cancellationToken)
-    {
-        var tasks = await GetAll(cancellationToken);
-        var task = tasks.FirstOrDefault(x => x.Id == id);
+    { 
+        var task = await GetByKey(id, cancellationToken);
         if (task == null)
         {
             throw new Exception("task is not exits");
@@ -37,7 +36,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
             throw new Exception("task is not4you");
         }
         
-        task.Status = StatusEnum.Completed;
+        task.Status = TaskStatusEnum.Completed;
         task.EditedAt = DateTime.UtcNow;
         
         await Update(task, cancellationToken);
@@ -47,8 +46,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
 
     public async Task Assign(long id, string userPublicId, CancellationToken cancellationToken)
     {
-        var tasks = await GetAll(cancellationToken);
-        var task = tasks.FirstOrDefault(x => x.Id == id);
+        var task = await GetByKey(id, cancellationToken);
         if (task == null)
         {
             throw new Exception("task is not exits");
@@ -64,7 +62,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
     {
         var tasks = await GetAll(cancellationToken);
 
-        return tasks.Where(x => x.Status == StatusEnum.Open).ToArray();
+        return tasks.Where(x => x.Status == TaskStatusEnum.Open).ToArray();
     }
 
     public async Task<TaskDto[]> My(string userPublicId, CancellationToken cancellationToken)

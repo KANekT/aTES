@@ -18,15 +18,7 @@ public record TaskDto
     [Column(nameof(Description))]
     public string Description { get; set; } = string.Empty;
     [Column(nameof(Status))]
-    public StatusEnum Status { get; set; } = StatusEnum.Open;
+    public TaskStatusEnum Status { get; set; } = TaskStatusEnum.Open;
     [Column(nameof(PoPugId))]
     public string PoPugId { get; set; } = string.Empty;
-}
-
-public record TaskPrice
-{
-    [Column(nameof(Lose))]
-    public int Lose { get; private set; } = new Random().Next(10, 20);
-    [Column(nameof(Reward))]
-    public int Reward { get; private set; } = new Random().Next(20, 40);
 }

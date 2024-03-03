@@ -2,7 +2,7 @@ namespace Core;
 
 public interface IGenericRepository<T>
 {
-    Task<T?> GetByKey(int id, CancellationToken ctx);
+    Task<T?> GetByKey(long id, CancellationToken ctx);
     Task<T?> GetByPublicId(string id, CancellationToken ctx);
     Task<IEnumerable<T>> GetAll(CancellationToken ctx);
     Task<bool> Add(T entity, CancellationToken ctx);
