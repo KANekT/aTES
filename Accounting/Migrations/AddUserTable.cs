@@ -1,3 +1,4 @@
+using Accounting.Models;
 using FluentMigrator;
 
 namespace Accounting.Migrations;
@@ -11,6 +12,7 @@ public class AddUserTable : Migration
             .WithColumn(nameof(UserDto.Id)).AsInt64().PrimaryKey().Identity()
             .WithColumn(nameof(UserDto.Ulid)).AsString().NotNullable()
             .WithColumn(nameof(UserDto.Role)).AsByte()
+            .WithColumn(nameof(UserDto.Balance)).AsCurrency()
             ;
     }
 

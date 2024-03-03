@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Core.Enums;
 
-namespace Tasks.Models;
+namespace Accounting.Models;
 
 [Table("Tasks", Schema = "Tasks")]
 public record TaskDto
@@ -21,4 +21,9 @@ public record TaskDto
     public TaskStatusEnum Status { get; set; } = TaskStatusEnum.Open;
     [Column(nameof(PoPugId))]
     public string PoPugId { get; set; } = string.Empty;
+
+    [Column(nameof(Lose))]
+    public int Lose { get; private set; } = new Random().Next(10, 20);
+    [Column(nameof(Reward))]
+    public int Reward { get; private set; } = new Random().Next(20, 40);
 }

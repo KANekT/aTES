@@ -1,13 +1,13 @@
 using System.Net;
+using Accounting.Kafka;
 using Accounting.Migrations;
+using Accounting.Repositories;
 using Core;
 using Core.Kafka;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Conventions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Tasks.Kafka;
-using Tasks.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +26,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 builder.Services.AddSingleton(new DapperContext(builder.Configuration));
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<ITaskRepository, TaskRepository>();
+builder.Services.AddSingleton<ITransactionRepository, TransactionRepository>();
 
 builder.Services.AddScoped<IConventionSet>(_ => new DefaultConventionSet(new CustomMetadataTable().SchemaName, null));
 builder.Services
@@ -46,7 +47,7 @@ builder.Services.AddSwaggerGen();
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.Listen(IPAddress.Any, 6001, listenOptions =>
+    serverOptions.Listen(IPAddress.Any, 6002, listenOptions =>
     {
         listenOptions.Protocols = HttpProtocols.Http1;
     });
