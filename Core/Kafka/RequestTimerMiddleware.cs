@@ -27,14 +27,19 @@ namespace Core.Kafka;
 /// </summary>
 public class RequestTimerMiddleware
 {
-    private readonly KafkaDependentProducer<string, long> _producer;
+    private readonly IKafkaDependentProducerProtobuf<string, Proto.V1.RequestTimeProto> _producer;
+    private readonly IKafkaDependentProducerProtobuf<string, Proto.V2.RequestTimeProto> _producerV2;
     private readonly RequestDelegate _next;
     private readonly ILogger _logger;
 
-    public RequestTimerMiddleware(RequestDelegate next, KafkaDependentProducer<string, long> producer, ILogger<RequestTimerMiddleware> logger)
+    public RequestTimerMiddleware(RequestDelegate next, 
+        IKafkaDependentProducerProtobuf<string, Proto.V1.RequestTimeProto> producer, 
+        IKafkaDependentProducerProtobuf<string, Proto.V2.RequestTimeProto> producerV2, 
+        ILogger<RequestTimerMiddleware> logger)
     {
         _next = next;
         _producer = producer;
+        _producerV2 = producerV2;
         _logger = logger;
     }
 
@@ -54,9 +59,40 @@ public class RequestTimerMiddleware
             var pathValue = context.Request.Path.Value;
             if (!string.IsNullOrEmpty(pathValue))
             {
+                /*
                 _producer.Produce(
                     Constants.KafkaTopic.RequestTime,
-                    new Message<string, long> { Key = pathValue, Value = s.ElapsedMilliseconds },
+                    new Message<string, Proto.V1.RequestTimeProto>
+                    {
+                        Key = pathValue, 
+                        Value = new Proto.V1.RequestTimeProto
+                        {
+                            EventId = Ulid.NewUlid().ToString(),
+                            EventName = Constants.KafkaTopic.RequestTime,
+                            EventTime = DateTime.UtcNow.ToString("u"),
+                            EventVersion = "1",
+                            Time = s.ElapsedMilliseconds
+                        }
+                    },
+                    _deliveryReportHandler
+                );
+                */
+                
+                _producerV2.Produce(
+                    Constants.KafkaTopic.RequestTime,
+                    new Message<string, Proto.V2.RequestTimeProto>
+                    {
+                        Key = pathValue, 
+                        Value = new Proto.V2.RequestTimeProto
+                        {
+                            EventId = Ulid.NewUlid().ToString(),
+                            EventName = Constants.KafkaTopic.RequestTime,
+                            EventTime = DateTime.UtcNow.ToString("u"),
+                            EventVersion = "2",
+                            Time = s.ElapsedMilliseconds,
+                            Path = pathValue
+                        }
+                    },
                     _deliveryReportHandler
                 );
             }
@@ -67,7 +103,15 @@ public class RequestTimerMiddleware
         }
     }
 
-    private void _deliveryReportHandler(DeliveryReport<string, long> deliveryReport)
+    private void _deliveryReportHandler(DeliveryReport<string, Proto.V1.RequestTimeProto> deliveryReport)
+    {
+        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
+        {
+            _logger.Log(LogLevel.Warning, $"Failed to log request time for path: {deliveryReport.Message.Key}");
+        }
+    }
+    
+    private void _deliveryReportHandler(DeliveryReport<string, Proto.V2.RequestTimeProto> deliveryReport)
     {
         if (deliveryReport.Status == PersistenceStatus.NotPersisted)
         {

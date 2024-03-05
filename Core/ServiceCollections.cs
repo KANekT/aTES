@@ -23,7 +23,8 @@ public static class ServiceCollections
         services.AddSingleton<KafkaDependentProducer<Null, string>>();
         services.AddSingleton<KafkaDependentProducer<string, long>>();
         services.AddSingleton<KafkaDependentProducer<string, string>>();
-
+        services.AddSingleton(typeof(IKafkaDependentProducerProtobuf<,>), typeof(KafkaDependentProducerProtobuf<,>));
+        
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {

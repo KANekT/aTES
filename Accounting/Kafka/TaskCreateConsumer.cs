@@ -1,4 +1,3 @@
-using Accounting.Models;
 using Accounting.Repositories;
 using Confluent.Kafka;
 using Core;

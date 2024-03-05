@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option csharp_namespace = "Proto.V2";
+
+message RequestTimeProto {
+  string event_id = 1;
+  string event_version = 2;
+  string event_name = 3;
+  string event_time = 4;
+  string producer = 5;
+  int64 time = 6;
+  string path = 7;
+}
