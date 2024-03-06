@@ -43,7 +43,7 @@ public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
                       {
                           Ulid = result.Message.Value.PublicId,
                           PoPugId = result.Message.Value.PoPugId,
-                          Description = string.Empty
+                          Title = string.Empty
                       }, cancellationToken);
 
         var transactionType = TransactionTypeEnum.Withdrawal;

@@ -14,7 +14,8 @@ public class AddTaskTable : Migration
             .WithColumn(nameof(TaskDto.Ulid)).AsString().NotNullable()
             .WithColumn(nameof(TaskDto.CreatedAt)).AsDateTime().WithDefault(SystemMethods.CurrentUTCDateTime)
             .WithColumn(nameof(TaskDto.EditedAt)).AsDateTime().WithDefault(SystemMethods.CurrentUTCDateTime)
-            .WithColumn(nameof(TaskDto.Description)).AsString().NotNullable()
+            .WithColumn(nameof(TaskDto.Title)).AsString().NotNullable()
+            .WithColumn(nameof(TaskDto.Description)).AsString()
             .WithColumn(nameof(TaskDto.Status)).AsByte().NotNullable().WithDefaultValue((byte)TaskStatusEnum.Open)
             .WithColumn(nameof(TaskDto.PoPugId)).AsString().NotNullable()
             ;

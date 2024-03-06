@@ -7,6 +7,6 @@ import "base.proto";
 message TaskCreatedProto {
   BaseProto base = 1;
   string publicId = 5;
-  string description = 6;
-  string poPugId = 7;
+  string poPugId = 6;
+  string title = 7;
 }

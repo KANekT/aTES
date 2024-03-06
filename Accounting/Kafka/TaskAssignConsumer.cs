@@ -43,7 +43,7 @@ public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
                       {
                           Ulid = result.Message.Value.PublicId,
                           PoPugId = result.Message.Value.PoPugId,
-                          Description = string.Empty
+                          Title = string.Empty
                       }, cancellationToken);
 
         var transactionType = TransactionTypeEnum.Enrollment;

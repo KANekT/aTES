@@ -83,7 +83,7 @@ public class TaskController : ControllerBase
                 EventVersion = "1"
             },
             PublicId = task.Ulid,
-            Description = model.Description,
+            Title = model.Title,
             PoPugId = poPugId
         };
             

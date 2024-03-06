@@ -46,7 +46,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
                 Ulid = result.Message.Value.PublicId,
                 CreatedAt = DateTime.UtcNow,
                 EditedAt = DateTime.UtcNow,
-                Description = result.Message.Value.Description,
+                Title = result.Message.Value.Title,
                 PoPugId = result.Message.Value.PoPugId
             };
 
@@ -54,7 +54,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
         }
         else
         {
-            taskDto.Description = result.Message.Value.Description;
+            taskDto.Title = result.Message.Value.Title;
             await _taskRepository.Update(taskDto, cancellationToken);
         }
         

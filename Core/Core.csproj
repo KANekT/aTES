@@ -35,6 +35,6 @@
       <Protobuf Include="Protos\base.proto" ProtoRoot="Protos\" />
       <Protobuf Include="Protos\task.assign.v1.proto" ProtoRoot="Protos\" />
       <Protobuf Include="Protos\task.completed.v1.proto" ProtoRoot="Protos\" />
-      <Protobuf Include="Protos\test.created.v1.proto" ProtoRoot="Protos\" />
+      <Protobuf Include="Protos\task.created.v1.proto" ProtoRoot="Protos\" />
     </ItemGroup>
 </Project>

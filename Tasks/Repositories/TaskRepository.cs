@@ -17,6 +17,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
         {
             CreatedAt = DateTime.UtcNow,
             EditedAt = DateTime.UtcNow,
+            Title = model.Title,
             Description = model.Description,
             PoPugId = poPugId
         };
