@@ -4,6 +4,11 @@ using Microsoft.Extensions.Hosting;
 
 namespace Core.Kafka;
 
+/// <summary>
+/// https://www.kafkatool.com/
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+/// <typeparam name="TValue"></typeparam>
 public abstract class BaseConsumer<TKey, TValue> : BackgroundService
 {
     private readonly string _topic;
