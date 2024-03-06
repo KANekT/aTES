@@ -39,12 +39,14 @@ public class TaskPropertyMutationConsumer : BaseConsumer<string, string>
     private async Task RequestToDb(ConsumeResult<string, string> result, CancellationToken cancellationToken)
     {
         var task = result.Message.Value.Encode<TaskMutationEventModel>();
-        
-        var taskDto = await _taskRepository.GetByPublicId(task.PublicTaskId, cancellationToken);
-        if (taskDto == null)
-        {
-            throw new Exception("Task not exits");
-        }
+
+        var taskDto = await _taskRepository.GetByPublicId(task.PublicTaskId, cancellationToken) ??
+                      await _taskRepository.Create(new TaskCreatedEventModel
+                      {
+                          PublicId = task.PublicTaskId,
+                          PoPugId = task.PublicPoPugId,
+                          Description = string.Empty
+                      }, cancellationToken);
 
         decimal money;
         TransactionTypeEnum transactionType;

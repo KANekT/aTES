@@ -40,10 +40,15 @@ public class TaskCreateConsumer : BaseConsumer<string, string>
     {
         var task = result.Message.Value.Encode<TaskCreatedEventModel>();
         
-        var taskDto = await _taskRepository.Create(task, cancellationToken);
+        var taskDto = await _taskRepository.GetByPublicId(task.PublicId, cancellationToken);
         if (taskDto == null)
         {
-            throw new Exception("Task not created");
+            taskDto = await _taskRepository.Create(task, cancellationToken);
+        }
+        else
+        {
+            taskDto.Description = task.Description;
+            await _taskRepository.Update(taskDto, cancellationToken);
         }
         
         var money = -1 * taskDto.Lose;

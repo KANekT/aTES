@@ -11,7 +11,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
        
     }
 
-    public async Task<TaskDto?> Create(TaskCreatedEventModel model, CancellationToken cancellationToken)
+    public async Task<TaskDto> Create(TaskCreatedEventModel model, CancellationToken cancellationToken)
     {
         var taskDto = new TaskDto
         {
@@ -22,6 +22,6 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
             PoPugId = model.PoPugId
         };
         var taskAdd = await Add(taskDto, cancellationToken);
-        return taskAdd ? taskDto : null;
+        return taskAdd ? taskDto : throw new Exception("Task not created");
     }
 }
