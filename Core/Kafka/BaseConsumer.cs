@@ -21,7 +21,8 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
     }
         
     protected abstract Task Consume(ConsumeResult<TKey, TValue> result, CancellationToken cancellationToken);
-    
+    protected abstract Task ConsumeBatch(IEnumerable<ConsumeResult<TKey, TValue>> results, CancellationToken cancellationToken);
+
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
         _kafkaConsumer.Subscribe(_topic);
@@ -30,7 +31,8 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
         {
             try
             {
-                await Consume(_kafkaConsumer.Consume(cancellationToken), cancellationToken);
+                await ConsumeBatch(_kafkaConsumer.ConsumeBatch(TimeSpan.FromSeconds(5), 100), cancellationToken);
+                //await Consume(_kafkaConsumer.Consume(cancellationToken), cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -54,7 +56,7 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
             }
         }
     }
-
+    
     public override void Dispose()
     {
         _kafkaConsumer.Close(); // Commit offsets and leave the group cleanly.

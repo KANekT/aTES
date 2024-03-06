@@ -44,20 +44,6 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
         return task.Ulid;
     }
 
-    public async Task Assign(long id, string userPublicId, CancellationToken cancellationToken)
-    {
-        var task = await GetByKey(id, cancellationToken);
-        if (task == null)
-        {
-            throw new Exception("task is not exits");
-        }
-
-        task.PoPugId = userPublicId;
-        task.EditedAt = DateTime.UtcNow;
-        
-        await Update(task, cancellationToken);
-    }
-
     public async Task<TaskDto[]> GetAllOpen(CancellationToken cancellationToken)
     {
         var tasks = await GetAll(cancellationToken);

@@ -78,7 +78,7 @@ public class TaskController : ControllerBase
             new Message<string, string> { Key = userName, Value = taskCreated },
             _deliveryReportHandler
         );
-
+        
         await AssignTask(userName, task, cancellationToken);
 
         return Ok();
@@ -98,10 +98,12 @@ public class TaskController : ControllerBase
         foreach (var task in tasks)
         {
             var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
-            await _taskRepository.Assign(task.Id, poPugId, cancellationToken);
-
-            await AssignTask(userName, task, cancellationToken);
+            task.PoPugId = poPugId;
+            
+            await _taskRepository.Update(task, cancellationToken);
         }
+
+        await AssignTasks(userName, tasks, cancellationToken);
         
         return Ok();
     }
@@ -118,9 +120,16 @@ public class TaskController : ControllerBase
 
         var taskPublicId = await _taskRepository.Completed(id, userName, cancellationToken);
 
+        var eventModel = new TaskMutationEventModel
+        {
+            PublicTaskId = taskPublicId,
+            PublicPoPugId = userName,
+            Status = TaskMutationEnum.Completed
+        }.Decode();
+        
         _producer.Produce(
-            Constants.KafkaTopic.TaskCompleted,
-            new Message<string, string> { Key = userName, Value = taskPublicId },
+            Constants.KafkaTopic.TaskPropertiesMutation,
+            new Message<string, string> { Key = userName, Value = eventModel },
             _deliveryReportHandler
         );
 
@@ -129,17 +138,47 @@ public class TaskController : ControllerBase
 
     private async Task AssignTask(string identityName, TaskDto task, CancellationToken cancellationToken)
     {
-        var taskAssigned = new TaskAssignedEventModel
+        var eventModel = new TaskMutationEventModel
         {
             PublicTaskId = task.Ulid,
-            PublicPoPugId = task.PoPugId
+            PublicPoPugId = task.PoPugId,
+            Status = TaskMutationEnum.Assign
         }.Decode();
         
         _producer.Produce(
-            Constants.KafkaTopic.TaskAssigned,
-            new Message<string, string> { Key = identityName, Value = taskAssigned },
+            Constants.KafkaTopic.TaskPropertiesMutation,
+            new Message<string, string> { Key = identityName, Value = eventModel },
             _deliveryReportHandler
         );
+    }
+    
+    private async Task AssignTasks(string identityName, TaskDto[] tasks, CancellationToken cancellationToken)
+    {
+        var messages = tasks.Select(task => new Message<string, string>
+        {
+            Key = identityName, Value = new TaskMutationEventModel
+            {
+                PublicTaskId = task.Ulid,
+                PublicPoPugId = task.PoPugId,
+                Status = TaskMutationEnum.Assign
+            }.Decode()
+        }).ToList();
+        
+        // copy from https://github.com/confluentinc/confluent-kafka-dotnet/issues/890
+        _producer.ProduceBatch(Constants.KafkaTopic.TaskPropertiesMutation, messages);
+
+        /*
+        var semaphore = new SemaphoreSlim(0, messages.Count);
+
+        void DeliveryHandler(DeliveryReport<string, string> deliveryReport)
+        {
+            semaphore.Release();
+        }
+
+        messages.ForEach(message => _producer.Produce(Constants.KafkaTopic.TaskPropertyMutation, message, DeliveryHandler));
+        
+        await semaphore.WaitAsync(cancellationToken);
+        */
     }
     
     private string? CheckUser()

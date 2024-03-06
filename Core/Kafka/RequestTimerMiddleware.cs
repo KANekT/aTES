@@ -64,11 +64,11 @@ public class RequestTimerMiddleware
                     Constants.KafkaTopic.RequestTime,
                     new Message<string, Proto.V1.RequestTimeProto>
                     {
-                        Key = pathValue, 
+                        Key = pathValue,
                         Value = new Proto.V1.RequestTimeProto
                         {
                             EventId = Ulid.NewUlid().ToString(),
-                            EventName = Constants.KafkaTopic.RequestTime,
+                            EventName = Constants.KafkaTopic.RequestTime + "_1",
                             EventTime = DateTime.UtcNow.ToString("u"),
                             EventVersion = "1",
                             Time = s.ElapsedMilliseconds
@@ -86,7 +86,7 @@ public class RequestTimerMiddleware
                         Value = new Proto.V2.RequestTimeProto
                         {
                             EventId = Ulid.NewUlid().ToString(),
-                            EventName = Constants.KafkaTopic.RequestTime,
+                            EventName = Constants.KafkaTopic.RequestTime + "_2",
                             EventTime = DateTime.UtcNow.ToString("u"),
                             EventVersion = "2",
                             Time = s.ElapsedMilliseconds,

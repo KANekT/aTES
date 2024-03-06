@@ -13,7 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 var cfg = builder.Configuration.GetConnectionString("postgres");
 
 builder.Services.AddCoreBase(builder.Configuration);
-builder.Services.AddHostedService<RequestTimeV1Consumer>();
 builder.Services.AddHostedService<RequestTimeV2Consumer>();
 
 // Add services to the container.

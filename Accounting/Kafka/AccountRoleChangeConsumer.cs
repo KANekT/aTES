@@ -18,6 +18,19 @@ public class AccountRoleChangeConsumer : BaseConsumer<string, string>
 
     protected override async Task Consume(ConsumeResult<string, string> result, CancellationToken cancellationToken)
     {
+        await RequestToDb(result, cancellationToken);
+    }
+
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, string>> results, CancellationToken cancellationToken)
+    {
+        foreach (var result in results)
+        {
+            await RequestToDb(result, cancellationToken);
+        }
+    }
+    
+    private async Task RequestToDb(ConsumeResult<string, string> result, CancellationToken cancellationToken)
+    {
         var role = Enum.Parse<RoleEnum>(result.Message.Value);
         await _userRepository.RoleChange(result.Message.Key, role, cancellationToken);
     }

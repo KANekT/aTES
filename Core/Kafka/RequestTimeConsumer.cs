@@ -1,6 +1,5 @@
 using Confluent.Kafka;
 using Core.Options;
-using Proto;
 
 namespace Core.Kafka;
 

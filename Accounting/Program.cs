@@ -19,8 +19,7 @@ builder.Services.AddHostedService<RequestTimeV1Consumer>();
 builder.Services.AddHostedService<AccountCreateConsumer>();
 builder.Services.AddHostedService<AccountRoleChangeConsumer>();
 builder.Services.AddHostedService<TaskCreateConsumer>();
-builder.Services.AddHostedService<TaskAssignedConsumer>();
-builder.Services.AddHostedService<TaskCompletedConsumer>();
+builder.Services.AddHostedService<TaskPropertyMutationConsumer>();
 
 // Add services to the container.
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);

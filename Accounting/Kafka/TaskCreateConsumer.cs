@@ -25,6 +25,19 @@ public class TaskCreateConsumer : BaseConsumer<string, string>
 
     protected override async Task Consume(ConsumeResult<string, string> result, CancellationToken cancellationToken)
     {
+        await RequestToDb(result, cancellationToken);
+    }
+
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, string>> results, CancellationToken cancellationToken)
+    {
+        foreach (var result in results)
+        {
+            await RequestToDb(result, cancellationToken);
+        }
+    }
+    
+    private async Task RequestToDb(ConsumeResult<string, string> result, CancellationToken cancellationToken)
+    {
         var task = result.Message.Value.Encode<TaskCreatedEventModel>();
         
         var taskDto = await _taskRepository.Create(task, cancellationToken);
