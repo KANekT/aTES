@@ -4,12 +4,13 @@ using Auth.Models;
 using Auth.Repositories;
 using Confluent.Kafka;
 using Core;
-using Core.EventModels;
 using Core.Extensions;
 using Core.Kafka;
 using Core.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proto;
+using Proto.V1;
 
 namespace Auth.Controllers;
 
@@ -19,24 +20,24 @@ namespace Auth.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly AuthenticationOptions _authenticationOptions;
-    private readonly KafkaDependentProducer<Null, string> _producerNull;
-    private readonly KafkaDependentProducer<string, string> _producerString;
     private readonly ILogger<AccountController> _logger;
     private readonly IUserRepository _userRepository;
+    private readonly KafkaDependentProducer<Null, AccountCreatedProto> _producerAccountCreated;
+    private readonly KafkaDependentProducer<string, AccountRoleChangedProto> _producerAccountRoleChanged;
 
     public AccountController(
         AuthenticationOptions authenticationOptions,
-        KafkaDependentProducer<Null, string> producerNull,
         ILogger<AccountController> logger,
         IUserRepository userRepository,
-        KafkaDependentProducer<string, string> producerString
+        KafkaDependentProducer<Null, AccountCreatedProto> producerAccountCreated,
+        KafkaDependentProducer<string, AccountRoleChangedProto> producerAccountRoleChanged
     )
     {
         _authenticationOptions = authenticationOptions;
         _logger = logger;
         _userRepository = userRepository;
-        _producerNull = producerNull;
-        _producerString = producerString;
+        _producerAccountCreated = producerAccountCreated;
+        _producerAccountRoleChanged = producerAccountRoleChanged;
     }
 
     [HttpPost("[action]")]
@@ -61,16 +62,23 @@ public class AccountController : ControllerBase
 
         if (user != null)
         {
-            var json = new AccountCreatedEventModel
+            var value = new AccountCreatedProto
             {
+                Base = new BaseProto
+                {
+                    EventId = Guid.NewGuid().ToString("N"),
+                    EventName = Constants.KafkaEvent.AccountCreated,
+                    EventTime = DateTime.UtcNow.ToString("u"),
+                    EventVersion = "1"
+                },
                 PublicId = user.Ulid,
-                Role = user.Role
-            }.Decode();
+                Role = (int)user.Role
+            };
 
-            _producerNull.Produce(
-                Constants.KafkaTopic.AccountCreatedStream,
-                new Message<Null, string> { Value = json },
-                _deliveryReportHandlerNull
+            _producerAccountCreated.Produce(
+                Constants.KafkaTopic.AccountStreaming,
+                new Message<Null, AccountCreatedProto> { Value = value },
+                _deliveryReportHandlerAccountCreated
             );
             //await _producer.ProduceAsync(_topic, new Message<Null, string> { Value = json });
         }
@@ -91,16 +99,29 @@ public class AccountController : ControllerBase
 
         await _userRepository.UpdateRole(identity.Name, model.Role, cancellationToken);
 
-        _producerString.Produce(
+        var value = new AccountRoleChangedProto
+        {
+            Base = new BaseProto
+            {
+                EventId = Guid.NewGuid().ToString("N"),
+                EventName = Constants.KafkaEvent.AccountRoleChanged,
+                EventTime = DateTime.UtcNow.ToString("u"),
+                EventVersion = "1"
+            },
+            PublicId = identity.Name,
+            Role = (int)model.Role
+        };
+        
+        _producerAccountRoleChanged.Produce(
             Constants.KafkaTopic.AccountRoleChange,
-            new Message<string, string> { Key = identity.Name, Value = model.Role.ToString("G") },
-            _deliveryReportHandlerString
+            new Message<string, AccountRoleChangedProto> { Key = identity.Name, Value = value },
+            _deliveryReportHandlerAccountRoleChanged
         );
 
         return Ok();
     }
 
-    private void _deliveryReportHandlerNull(DeliveryReport<Null, string> deliveryReport)
+    private void _deliveryReportHandlerAccountCreated(DeliveryReport<Null, AccountCreatedProto> deliveryReport)
     {
         if (deliveryReport.Status == PersistenceStatus.NotPersisted)
         {
@@ -114,7 +135,7 @@ public class AccountController : ControllerBase
         }
     }
 
-    private void _deliveryReportHandlerString(DeliveryReport<string, string> deliveryReport)
+    private void _deliveryReportHandlerAccountRoleChanged(DeliveryReport<string, AccountRoleChangedProto> deliveryReport)
     {
         if (deliveryReport.Status == PersistenceStatus.NotPersisted)
         {

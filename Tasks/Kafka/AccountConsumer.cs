@@ -1,28 +1,29 @@
 using Confluent.Kafka;
 using Core;
-using Core.EventModels;
-using Core.Extensions;
+using Core.Enums;
 using Core.Kafka;
 using Core.Options;
+using Proto.V1;
 using Tasks.Repositories;
 
 namespace Tasks.Kafka;
 
-public class AccountCreateConsumer : BaseConsumer<Null, string>
+public class AccountCreateConsumer : BaseConsumer<Null, AccountCreatedProto>
 {
     private readonly IUserRepository _userRepository;
     
-    public AccountCreateConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountCreatedStream)
+    public AccountCreateConsumer(IKafkaOptions options, IUserRepository userRepository)
+        : base(options, Constants.KafkaTopic.AccountStreaming)
     {
         _userRepository = userRepository;
     }
 
-    protected override async Task Consume(ConsumeResult<Null, string> result, CancellationToken cancellationToken)
+    protected override async Task Consume(ConsumeResult<Null, AccountCreatedProto> result, CancellationToken cancellationToken)
     {
         await RequestToDb(result, cancellationToken);
     }
 
-    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<Null, string>> results, CancellationToken cancellationToken)
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<Null, AccountCreatedProto>> results, CancellationToken cancellationToken)
     {
         foreach (var result in results)
         {
@@ -30,10 +31,11 @@ public class AccountCreateConsumer : BaseConsumer<Null, string>
         }
     }
     
-    private async Task RequestToDb(ConsumeResult<Null, string> result, CancellationToken cancellationToken)
+    private async Task RequestToDb(ConsumeResult<Null, AccountCreatedProto> result, CancellationToken cancellationToken)
     {
-        var user = result.Message.Value.Encode<AccountCreatedEventModel>();
-        await _userRepository.Create(user.PublicId, user.Role, cancellationToken);
+        if (result.Message.Value.Base.EventName == Constants.KafkaEvent.AccountCreated)
+        {
+            await _userRepository.Create(result.Message.Value.PublicId, (RoleEnum)result.Message.Value.Role, cancellationToken);
+        }
     }
-
 }

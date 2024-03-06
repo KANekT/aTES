@@ -4,10 +4,11 @@ using Core;
 using Core.Enums;
 using Core.Kafka;
 using Core.Options;
+using Proto.V1;
 
 namespace Accounting.Kafka;
 
-public class AccountRoleChangeConsumer : BaseConsumer<string, string>
+public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChangedProto>
 {
     private readonly IUserRepository _userRepository;
     
@@ -16,12 +17,12 @@ public class AccountRoleChangeConsumer : BaseConsumer<string, string>
         _userRepository = userRepository;
     }
 
-    protected override async Task Consume(ConsumeResult<string, string> result, CancellationToken cancellationToken)
+    protected override async Task Consume(ConsumeResult<string, AccountRoleChangedProto> result, CancellationToken cancellationToken)
     {
         await RequestToDb(result, cancellationToken);
     }
 
-    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, string>> results, CancellationToken cancellationToken)
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, AccountRoleChangedProto>> results, CancellationToken cancellationToken)
     {
         foreach (var result in results)
         {
@@ -29,9 +30,12 @@ public class AccountRoleChangeConsumer : BaseConsumer<string, string>
         }
     }
     
-    private async Task RequestToDb(ConsumeResult<string, string> result, CancellationToken cancellationToken)
+    private async Task RequestToDb(ConsumeResult<string, AccountRoleChangedProto> result, CancellationToken cancellationToken)
     {
-        var role = Enum.Parse<RoleEnum>(result.Message.Value);
-        await _userRepository.RoleChange(result.Message.Key, role, cancellationToken);
+        if (result.Message.Value.Base.EventName == Constants.KafkaEvent.AccountRoleChanged)
+        {
+            var role = (RoleEnum)result.Message.Value.Role;
+            await _userRepository.RoleChange(result.Message.Value.PublicId, role, cancellationToken);
+        }
     }
 }
