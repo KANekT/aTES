@@ -3,7 +3,7 @@ using Google.Protobuf;
 
 namespace Core.Kafka;
 
-public interface IKafkaDependentProducerProtobuf<K,V> where V : IMessage<V>, new()
+public interface IKafkaDependentProducer<K,V> where V : IMessage<V>, new()
 {
     /// <summary>
     ///     Asynchronously produce a message and expose delivery information

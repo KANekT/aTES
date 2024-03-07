@@ -1,15 +1,14 @@
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry.Serdes;
 using Core.Options;
+using Google.Protobuf;
 using Microsoft.Extensions.Hosting;
 
 namespace Core.Kafka;
 
-/// <summary>
-/// https://www.kafkatool.com/
-/// </summary>
-/// <typeparam name="TKey"></typeparam>
-/// <typeparam name="TValue"></typeparam>
 public abstract class BaseConsumer<TKey, TValue> : BackgroundService
+    where TValue : class, IMessage<TValue>, new()
 {
     private readonly string _topic;
     private readonly IConsumer<TKey, TValue> _kafkaConsumer;
@@ -17,7 +16,10 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
     protected BaseConsumer(IKafkaOptions options, string kafkaTopic)
     {
         _topic = kafkaTopic;
-        _kafkaConsumer = new ConsumerBuilder<TKey, TValue>(options.ConsumerConfig).Build();
+        _kafkaConsumer = new ConsumerBuilder<TKey, TValue>(options.ConsumerConfig)
+            .SetValueDeserializer(new ProtobufDeserializer<TValue>().AsSyncOverAsync())
+            .SetErrorHandler((_, e) => Console.WriteLine($"Error: {e.Reason}"))
+            .Build();
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -36,8 +38,7 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
         {
             try
             {
-                await ConsumeBatch(_kafkaConsumer.ConsumeBatch(TimeSpan.FromSeconds(5), 100), cancellationToken);
-                //await Consume(_kafkaConsumer.Consume(cancellationToken), cancellationToken);
+                await Consume(_kafkaConsumer.Consume(cancellationToken), cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -61,7 +62,7 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
             }
         }
     }
-    
+
     public override void Dispose()
     {
         _kafkaConsumer.Close(); // Commit offsets and leave the group cleanly.

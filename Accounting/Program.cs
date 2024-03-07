@@ -1,4 +1,5 @@
 using System.Net;
+using Accounting;
 using Accounting.Kafka;
 using Accounting.Migrations;
 using Accounting.Repositories;
@@ -15,6 +16,7 @@ var cfg = builder.Configuration.GetConnectionString("postgres");
 
 builder.Services.AddCoreBase(builder.Configuration);
 
+builder.Services.AddHostedService<DayOffCron>();
 builder.Services.AddHostedService<RequestTimeV1Consumer>();
 builder.Services.AddHostedService<AccountCreateConsumer>();
 builder.Services.AddHostedService<AccountRoleChangeConsumer>();

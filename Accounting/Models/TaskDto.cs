@@ -4,7 +4,7 @@ using Core.Enums;
 
 namespace Accounting.Models;
 
-[Table("Tasks", Schema = "Tasks")]
+[Table("Tasks", Schema = "Accounting")]
 public record TaskDto
 {
     [Column(nameof(Id)), Key]
@@ -21,9 +21,10 @@ public record TaskDto
     public TaskStatusEnum Status { get; set; } = TaskStatusEnum.Open;
     [Column(nameof(PoPugId))]
     public string PoPugId { get; set; } = string.Empty;
-
     [Column(nameof(Lose))]
     public int Lose { get; private set; } = new Random().Next(10, 20);
     [Column(nameof(Reward))]
     public int Reward { get; private set; } = new Random().Next(20, 40);
+    [Column(nameof(JiraId))]
+    public string JiraId { get; set; }
 }

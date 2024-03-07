@@ -5,7 +5,7 @@ using Core;
 using Core.Enums;
 using Core.Kafka;
 using Core.Options;
-using Proto.V1;
+using Proto.V2;
 
 namespace Accounting.Kafka;
 
@@ -47,6 +47,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
                 CreatedAt = DateTime.UtcNow,
                 EditedAt = DateTime.UtcNow,
                 Title = result.Message.Value.Title,
+                JiraId = result.Message.Value.JiraId,
                 PoPugId = result.Message.Value.PoPugId
             };
 
@@ -54,6 +55,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
         }
         else
         {
+            taskDto.EditedAt = DateTime.UtcNow;
             taskDto.Title = result.Message.Value.Title;
             await _taskRepository.Update(taskDto, cancellationToken);
         }

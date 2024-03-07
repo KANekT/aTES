@@ -21,6 +21,7 @@ public class UserRepository : GenericRepository<UserDto>, IUserRepository
     {
         var userDto = new UserDto
         {
+            Ulid = Ulid.NewUlid().ToString(),
             CreatedAt = DateTime.UtcNow,
             Login = model.Login,
             UserName = model.UserName,

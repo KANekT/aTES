@@ -16,6 +16,10 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
+      - zookeeper-secrets:/etc/zookeeper/secrets
 
   broker:
     image: confluentinc/cp-kafka:latest
@@ -33,6 +37,9 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - broker-secrets:/etc/kafka/secrets
+      - broker-data:/var/lib/kafka/data
 
   schema-registry:
     image: confluentinc/cp-schema-registry:latest
@@ -46,7 +53,9 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-  
+    volumes:
+      - schema-secrets:/etc/schema-registry/secrets
+      
   control-center:
     image: confluentinc/cp-enterprise-control-center:latest
     hostname: control-center
@@ -65,7 +74,7 @@ services:
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-      PORT: 9021  
+      PORT: 9021
       
   pg-ates:
     container_name: pg-ates
@@ -126,3 +135,10 @@ services:
 
 volumes:
   postgres-data:
+  zookeeper-data:
+  zookeeper-log:
+  zookeeper-secrets:
+  broker-data:
+  broker-secrets:
+  schema-secrets:
+  control-data:

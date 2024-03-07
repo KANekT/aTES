@@ -13,8 +13,6 @@ public class TransactionDto
     public string Ulid { get; set; } = new Ulid().ToString();
     [Column(nameof(CreatedAt))]
     public DateTime CreatedAt { get; set; }
-    [Column(nameof(EditedAt))]
-    public DateTime EditedAt { get; set; }
     [Column(nameof(System.Type))]
     public TransactionTypeEnum Type { get; set; }
     [Column(nameof(PoPugId))]

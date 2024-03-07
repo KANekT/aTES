@@ -41,6 +41,8 @@ public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
                       await _taskRepository.Create(new TaskDto
                       {
+                          CreatedAt = DateTime.UtcNow,
+                          EditedAt = DateTime.UtcNow,
                           Ulid = result.Message.Value.PublicId,
                           PoPugId = result.Message.Value.PoPugId,
                           Title = string.Empty

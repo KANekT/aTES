@@ -15,6 +15,7 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
     {
         var taskDto = new TaskDto
         {
+            Ulid = Ulid.NewUlid().ToString(),
             CreatedAt = DateTime.UtcNow,
             EditedAt = DateTime.UtcNow,
             Title = model.Title,

@@ -27,14 +27,14 @@ namespace Core.Kafka;
 /// </summary>
 public class RequestTimerMiddleware
 {
-    private readonly IKafkaDependentProducerProtobuf<string, Proto.V1.RequestTimeProto> _producer;
-    private readonly IKafkaDependentProducerProtobuf<string, Proto.V2.RequestTimeProto> _producerV2;
+    private readonly IKafkaDependentProducer<string, Proto.V1.RequestTimeProto> _producer;
+    private readonly IKafkaDependentProducer<string, Proto.V2.RequestTimeProto> _producerV2;
     private readonly RequestDelegate _next;
     private readonly ILogger _logger;
 
     public RequestTimerMiddleware(RequestDelegate next, 
-        IKafkaDependentProducerProtobuf<string, Proto.V1.RequestTimeProto> producer, 
-        IKafkaDependentProducerProtobuf<string, Proto.V2.RequestTimeProto> producerV2, 
+        IKafkaDependentProducer<string, Proto.V1.RequestTimeProto> producer, 
+        IKafkaDependentProducer<string, Proto.V2.RequestTimeProto> producerV2, 
         ILogger<RequestTimerMiddleware> logger)
     {
         _next = next;

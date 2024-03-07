@@ -15,8 +15,8 @@ public class TransactionRepository : GenericRepository<TransactionDto>, ITransac
     {
         var transactionDto = new TransactionDto
         {
+            Ulid = Ulid.NewUlid().ToString(),
             CreatedAt = DateTime.UtcNow,
-            EditedAt = DateTime.UtcNow,
             Type = type,
             PoPugId = publicId,
             Money = money,
@@ -24,5 +24,16 @@ public class TransactionRepository : GenericRepository<TransactionDto>, ITransac
         
         var transactionAdd = await Add(transactionDto, cancellationToken);
         return transactionAdd ? transactionDto : null;
+    }
+
+    public async Task<decimal> GetTopMoney(DateTime utcNowDate, CancellationToken cancellationToken)
+    {
+        var all = await GetAll(cancellationToken);
+        var money = all.Where(x =>
+            x.CreatedAt.Date == utcNowDate &&
+            x.Type is TransactionTypeEnum.Withdrawal or TransactionTypeEnum.Enrollment)
+            .Sum(x => x.Money);
+
+        return money > 0 ? money : 0;
     }
 }

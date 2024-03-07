@@ -18,6 +18,8 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
 
     public async Task<bool> Add(T entity, CancellationToken ctx)
     {
+        _connection.Open();
+        
         var rowsEffected = 0;
         try
         {
@@ -32,12 +34,15 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         {
             // ignored
         }
-
+        
+        _connection.Close();
         return rowsEffected > 0;
     }
 
     public async Task<bool> Delete(T entity, CancellationToken ctx)
     {
+        _connection.Open();
+        
         var rowsEffected = 0;
         try
         {
@@ -53,11 +58,14 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             // ignored
         }
 
+        _connection.Close();
         return rowsEffected > 0;
     }
 
     public async Task<IEnumerable<T>> GetAll(CancellationToken ctx)
     {
+        _connection.Open();
+        
         IEnumerable<T> result = Array.Empty<T>();
         try
         {
@@ -71,11 +79,14 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             // ignored
         }
 
+        _connection.Close();
         return result;
     }
 
     public async Task<T?> GetByKey(long id, CancellationToken ctx)
     {
+        _connection.Open();
+        
         IEnumerable<T> result = Array.Empty<T>();
         try
         {
@@ -90,11 +101,14 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             // ignored
         }
 
+        _connection.Close();
         return result.FirstOrDefault();
     }
 
     public async Task<T?> GetByPublicId(string id, CancellationToken ctx)
     {
+        _connection.Open();
+        
         IEnumerable<T> result = Array.Empty<T>();
         try
         {
@@ -109,11 +123,14 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             // ignored
         }
 
+        _connection.Close();
         return result.FirstOrDefault();
     }
     
     public async Task<bool> Update(T entity, CancellationToken ctx)
     {
+        _connection.Open();
+        
         var rowsEffected = 0;
         try
         {
@@ -150,6 +167,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             // ignored
         }
 
+        _connection.Close();
         return rowsEffected > 0;
     }
 

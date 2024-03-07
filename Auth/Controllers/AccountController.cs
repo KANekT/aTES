@@ -22,15 +22,15 @@ public class AccountController : ControllerBase
     private readonly AuthenticationOptions _authenticationOptions;
     private readonly ILogger<AccountController> _logger;
     private readonly IUserRepository _userRepository;
-    private readonly KafkaDependentProducer<Null, AccountCreatedProto> _producerAccountCreated;
-    private readonly KafkaDependentProducer<string, AccountRoleChangedProto> _producerAccountRoleChanged;
+    private readonly IKafkaDependentProducer<Null, AccountCreatedProto> _producerAccountCreated;
+    private readonly IKafkaDependentProducer<string, AccountRoleChangedProto> _producerAccountRoleChanged;
 
     public AccountController(
         AuthenticationOptions authenticationOptions,
         ILogger<AccountController> logger,
         IUserRepository userRepository,
-        KafkaDependentProducer<Null, AccountCreatedProto> producerAccountCreated,
-        KafkaDependentProducer<string, AccountRoleChangedProto> producerAccountRoleChanged
+        IKafkaDependentProducer<Null, AccountCreatedProto> producerAccountCreated,
+        IKafkaDependentProducer<string, AccountRoleChangedProto> producerAccountRoleChanged
     )
     {
         _authenticationOptions = authenticationOptions;

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option csharp_namespace = "Proto.V2";
+
+import "base.proto";
+
+message TaskCreatedProto {
+  BaseProto base = 1;
+  string publicId = 5;
+  string poPugId = 6;
+  string title = 7;
+  string jira_id = 8;
+}

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Confluent.Kafka;
+using Google.Protobuf;
 
 namespace Core.Kafka;
 
@@ -9,7 +10,7 @@ public static class KafkaBatchingExtensions
     // since some of the consumes in the batch may succeed prior to encountering an exception, without the caller
     // ever having seen the messages.
     public static IEnumerable<ConsumeResult<TKey, TVal>> ConsumeBatch<TKey, TVal>(this IConsumer<TKey, TVal> consumer,
-        TimeSpan maxWaitTime, int maxBatchSize, CancellationTokenSource cts = null)
+        TimeSpan maxWaitTime, int maxBatchSize, CancellationTokenSource cts = null) where TVal : IMessage<TVal>, new()
     {
         var waitBudgetRemaining = maxWaitTime;
         var deadline = DateTime.UtcNow + waitBudgetRemaining;
@@ -33,15 +34,15 @@ public static class KafkaBatchingExtensions
         return res;
     }
 
-    // This override just defaults the `flushTimeout` to 10 seconds
-    public static void ProduceBatch<TKey, TVal>(this KafkaDependentProducer<TKey, TVal> producer, string topic,
-        IEnumerable<Message<TKey, TVal>> messages, CancellationTokenSource cts = null)
+    // This override just defaults the `flushTimeout` to 5 seconds
+    public static void ProduceBatch<TKey, TVal>(this IKafkaDependentProducer<TKey, TVal> producer, string topic,
+        IEnumerable<Message<TKey, TVal>> messages, CancellationTokenSource cts = null) where TVal : IMessage<TVal>, new()
     {
-        producer.ProduceBatch(topic, messages, TimeSpan.FromSeconds(10), cts);
+        producer.ProduceBatch(topic, messages, TimeSpan.FromSeconds(5), cts);
     }
 
-    public static void ProduceBatch<TKey, TVal>(this KafkaDependentProducer<TKey, TVal> producer, string topic,
-        IEnumerable<Message<TKey, TVal>> messages, TimeSpan flushTimeout, CancellationTokenSource cts = null)
+    private static void ProduceBatch<TKey, TVal>(this IKafkaDependentProducer<TKey, TVal> producer, string topic,
+        IEnumerable<Message<TKey, TVal>> messages, TimeSpan flushTimeout, CancellationTokenSource cts = null) where TVal : IMessage<TVal>, new()
     {
         var errorReports = new ConcurrentQueue<DeliveryReport<TKey, TVal>>();
         var reportsExpected = 0;

@@ -17,17 +17,17 @@ namespace Tasks.Controllers;
 [Route("[controller]")]
 public class TaskController : ControllerBase
 {
-    private readonly KafkaDependentProducer<string, TaskCreatedProto> _producerTaskCreated;
-    private readonly KafkaDependentProducer<string, TaskAssignProto> _producerTaskAssign;
-    private readonly KafkaDependentProducer<string, TaskCompletedProto> _producerTaskCompleted;
+    private readonly IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> _producerTaskCreated;
+    private readonly IKafkaDependentProducer<string, TaskAssignProto> _producerTaskAssign;
+    private readonly IKafkaDependentProducer<string, TaskCompletedProto> _producerTaskCompleted;
     private readonly ILogger<TaskController> _logger;
     private readonly ITaskRepository _taskRepository;
     private readonly IUserRepository _userRepository;
 
     public TaskController(
-        KafkaDependentProducer<string, TaskCreatedProto> producerTaskCreated,
-        KafkaDependentProducer<string, TaskAssignProto> producerTaskAssign,
-        KafkaDependentProducer<string, TaskCompletedProto> producerTaskCompleted,
+        IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> producerTaskCreated,
+        IKafkaDependentProducer<string, TaskAssignProto> producerTaskAssign,
+        IKafkaDependentProducer<string, TaskCompletedProto> producerTaskCompleted,
         ILogger<TaskController> logger,
         ITaskRepository userRepository,
         IUserRepository userRepository1)
@@ -67,29 +67,35 @@ public class TaskController : ControllerBase
             return Unauthorized();
         }
         
+        if (model.Title.Contains('[') || model.Title.Contains(']'))
+        {
+            return BadRequest("Task contains jira id");
+        }
+        
         var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
 
         var task = await _taskRepository.Create(model, poPugId, cancellationToken);
         if (task == null)
             return BadRequest("task not created");
         
-        var value = new TaskCreatedProto
+        var value = new Proto.V2.TaskCreatedProto
         {
             Base = new BaseProto
             {
                 EventId = Guid.NewGuid().ToString("N"),
                 EventName = Constants.KafkaEvent.TaskCreated,
                 EventTime = DateTime.UtcNow.ToString("u"),
-                EventVersion = "1"
+                EventVersion = "2"
             },
             PublicId = task.Ulid,
             Title = model.Title,
+            JiraId = model.JiraId,
             PoPugId = poPugId
         };
             
         _producerTaskCreated.Produce(
             Constants.KafkaTopic.TaskStreaming,
-            new Message<string, TaskCreatedProto> { Key = userName, Value = value },
+            new Message<string, Proto.V2.TaskCreatedProto> { Key = userName, Value = value },
             _deliveryReportHandlerTaskCreated
         );
         
@@ -156,7 +162,7 @@ public class TaskController : ControllerBase
 
         return Ok();
     }
-
+    
     private async Task AssignTask(string identityName, TaskDto task, CancellationToken cancellationToken)
     {
         var value = new TaskAssignProto
@@ -223,7 +229,7 @@ public class TaskController : ControllerBase
         return identity is not { IsAuthenticated: true } ? null : identity.Name;
     }
     
-    private void _deliveryReportHandlerTaskCreated(DeliveryReport<string, TaskCreatedProto> deliveryReport)
+    private void _deliveryReportHandlerTaskCreated(DeliveryReport<string, Proto.V2.TaskCreatedProto> deliveryReport)
     {
         if (deliveryReport.Status == PersistenceStatus.NotPersisted)
         {
