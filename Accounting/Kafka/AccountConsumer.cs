@@ -35,11 +35,8 @@ public class AccountCreateConsumer : BaseConsumer<Null, AccountCreatedProto>
     
     private async Task RequestToDb(ConsumeResult<Null, AccountCreatedProto> result, CancellationToken cancellationToken)
     {
-        if (result.Message.Value.Base.EventName == Constants.KafkaEvent.AccountCreated)
-        {
-            await _userRepository.Create(result.Message.Value.PublicId, (RoleEnum)result.Message.Value.Role, cancellationToken);
+        await _userRepository.Create(result.Message.Value.PublicId, (RoleEnum)result.Message.Value.Role, cancellationToken);
 
-            await _transactionRepository.Create(result.Message.Value.PublicId, TransactionTypeEnum.Init, 0, cancellationToken);
-        }
+        await _transactionRepository.Create(result.Message.Value.PublicId, TransactionTypeEnum.Init, 0, cancellationToken);
     }
 }

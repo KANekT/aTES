@@ -32,10 +32,7 @@ public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChanged
     
     private async Task RequestToDb(ConsumeResult<string, AccountRoleChangedProto> result, CancellationToken cancellationToken)
     {
-        if (result.Message.Value.Base.EventName == Constants.KafkaEvent.AccountRoleChanged)
-        {
-            var role = (RoleEnum)result.Message.Value.Role;
-            await _userRepository.RoleChange(result.Message.Value.PublicId, role, cancellationToken);
-        }
+        var role = (RoleEnum)result.Message.Value.Role;
+        await _userRepository.RoleChange(result.Message.Value.PublicId, role, cancellationToken);
     }
 }
