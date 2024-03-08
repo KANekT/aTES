@@ -4,8 +4,10 @@ option csharp_namespace = "Proto.V1";
 
 import "base.proto";
 
-message AccountBalanceProto {
+message TransactionCreatedProto {
   BaseProto base = 1;
   string publicId = 5;
-  string balance = 6;
+  string poPugId = 6;
+  string money = 7;
+  int32 type = 8;
 }

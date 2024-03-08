@@ -24,6 +24,6 @@ public static class Constants
         public const string TaskCreated = "task.created";
         public const string TaskAssign = "task.assign";
         public const string TaskComplete = "task.complete";
-        public const string AccountBalance = "account.balance_updated";
+        public const string TransactionCreated = "transaction.created";
     }
 }

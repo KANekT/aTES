@@ -1,4 +1,4 @@
-using Accounting.Repositories;
+using Analytics.Repositories;
 using Confluent.Kafka;
 using Core;
 using Core.Enums;
@@ -6,7 +6,7 @@ using Core.Kafka;
 using Core.Options;
 using Proto.V1;
 
-namespace Accounting.Kafka;
+namespace Analytics.Kafka;
 
 public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChangedProto>
 {
@@ -32,10 +32,7 @@ public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChanged
     
     private async Task RequestToDb(ConsumeResult<string, AccountRoleChangedProto> result, CancellationToken cancellationToken)
     {
-        if (result.Message.Value.Base.EventName == Constants.KafkaEvent.AccountRoleChanged)
-        {
-            var role = (RoleEnum)result.Message.Value.Role;
-            await _userRepository.RoleChange(result.Message.Value.PublicId, role, cancellationToken);
-        }
+        var role = (RoleEnum)result.Message.Value.Role;
+        await _userRepository.RoleChange(result.Message.Value.PublicId, role, cancellationToken);
     }
 }

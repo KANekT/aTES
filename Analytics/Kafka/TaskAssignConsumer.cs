@@ -1,25 +1,19 @@
-using Accounting.Models;
-using Accounting.Repositories;
+using Analytics.Models;
+using Analytics.Repositories;
 using Confluent.Kafka;
 using Core;
-using Core.Enums;
 using Core.Kafka;
 using Core.Options;
 using Proto.V1;
 
-namespace Accounting.Kafka;
+namespace Analytics.Kafka;
 
 public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
 {
-    private readonly IUserRepository _userRepository;
     private readonly ITaskRepository _taskRepository;
-    private readonly ITransactionRepository _transactionRepository;
     
-    public TaskAssignConsumer(IKafkaOptions options, IUserRepository userRepository,
-        ITransactionRepository transactionRepository, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskPropertiesMutation)
+    public TaskAssignConsumer(IKafkaOptions options, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskPropertiesMutation)
     {
-        _userRepository = userRepository;
-        _transactionRepository = transactionRepository;
         _taskRepository = taskRepository;
     }
 
@@ -48,11 +42,7 @@ public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
                           Title = string.Empty
                       }, cancellationToken);
 
-        var transactionType = TransactionTypeEnum.Enrollment;
-        decimal money = -1 * taskDto.Lose;
-        
-        await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money, cancellationToken);
-        
-        await _userRepository.UpdateBalance(result.Message.Value.PoPugId, money, cancellationToken);
+        taskDto.PoPugId = result.Message.Value.PoPugId;
+        await _taskRepository.Update(taskDto, cancellationToken);
     }
 }

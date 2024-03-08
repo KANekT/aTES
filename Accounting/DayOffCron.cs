@@ -13,18 +13,15 @@ public class DayOffCron : BackgroundService
     private readonly ILogger<DayOffCron> _logger;
     private readonly IUserRepository _userRepository;
     private readonly ITransactionRepository _transactionRepository;
-    private readonly IKafkaDependentProducer<Null, AccountBalanceProto> _producerAccountBalance;
 
     public DayOffCron(
         ILogger<DayOffCron> logger,
         IUserRepository userRepository,
-        ITransactionRepository transactionRepository,
-        IKafkaDependentProducer<Null, AccountBalanceProto> producerAccountBalance)
+        ITransactionRepository transactionRepository)
     {
         _logger = logger;
         _userRepository = userRepository;
         _transactionRepository = transactionRepository;
-        _producerAccountBalance = producerAccountBalance;
     }
 
     protected override Task ExecuteAsync(CancellationToken cancellationToken)
@@ -39,9 +36,6 @@ public class DayOffCron : BackgroundService
             if (DateTime.UtcNow.Hour != 0 || DateTime.UtcNow.Minute != 0)
                 continue;
 
-            var topMoney = await _transactionRepository.GetTopMoney(DateTime.UtcNow.Date, cancellationToken);
-            //ToDo: сделать отправку события в Аналитику
-            
             var users = await _userRepository.GetAll(cancellationToken);
             foreach (var user in users)
             {
@@ -57,42 +51,11 @@ public class DayOffCron : BackgroundService
                         cancellationToken
                     );
                     
-                    //ToDo: сделать отправку на почту
+                    //ToDo: сделать отправку письма
+                    //счастья о выплате зарплаты
+                    
                 }
-                
-                var value = new AccountBalanceProto
-                {
-                    Base = new BaseProto
-                    {
-                        EventId = Guid.NewGuid().ToString("N"),
-                        EventName = Constants.KafkaEvent.AccountBalance,
-                        EventTime = DateTime.UtcNow.ToString("u"),
-                        EventVersion = "1"
-                    },
-                    PublicId = user.Ulid,
-                    Balance = user.Balance.ToString("F")
-                };
-        
-                _producerAccountBalance.Produce(
-                    Constants.KafkaTopic.AccountBalanceChange,
-                    new Message<Null, AccountBalanceProto> { Value = value },
-                    _deliveryReportHandlerAccountBalance
-                );
             }
-        }
-    }
-    
-    private void _deliveryReportHandlerAccountBalance(DeliveryReport<Null, AccountBalanceProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
         }
     }
 }
