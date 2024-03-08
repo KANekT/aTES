@@ -1,13 +1,14 @@
 using System.Net;
+using Accounting;
+using Accounting.Kafka;
+using Accounting.Migrations;
+using Accounting.Repositories;
 using Core;
 using Core.Kafka;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Conventions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Tasks.Kafka;
-using Tasks.Migrations;
-using Tasks.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +16,13 @@ var cfg = builder.Configuration.GetConnectionString("postgres");
 
 builder.Services.AddCoreBase(builder.Configuration);
 
+builder.Services.AddHostedService<DayOffCron>();
 builder.Services.AddHostedService<RequestTimeV1Consumer>();
 builder.Services.AddHostedService<AccountCreateConsumer>();
 builder.Services.AddHostedService<AccountRoleChangeConsumer>();
+builder.Services.AddHostedService<TaskCreateConsumer>();
+builder.Services.AddHostedService<TaskAssignConsumer>();
+builder.Services.AddHostedService<TaskCompletedConsumer>();
 
 // Add services to the container.
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
@@ -26,6 +31,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 builder.Services.AddSingleton(new DapperContext(builder.Configuration));
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<ITaskRepository, TaskRepository>();
+builder.Services.AddSingleton<ITransactionRepository, TransactionRepository>();
 
 builder.Services.AddScoped<IConventionSet>(_ => new DefaultConventionSet(new CustomMetadataTable().SchemaName, null));
 builder.Services
@@ -43,10 +49,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.Listen(IPAddress.Any, 6001, listenOptions =>
+    serverOptions.Listen(IPAddress.Any, 6002, listenOptions =>
     {
         listenOptions.Protocols = HttpProtocols.Http1;
     });

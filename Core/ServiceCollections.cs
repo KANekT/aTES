@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using Confluent.Kafka;
 using Core.Extensions;
 using Core.Kafka;
 using Core.Options;
@@ -20,10 +19,8 @@ public static class ServiceCollections
         services.AddSingleton<IKafkaOptions, KafkaOptions>();
         
         services.AddSingleton<KafkaClientHandle>();
-        services.AddSingleton<KafkaDependentProducer<Null, string>>();
-        services.AddSingleton<KafkaDependentProducer<string, long>>();
-        services.AddSingleton<KafkaDependentProducer<string, string>>();
-
+        services.AddSingleton(typeof(IKafkaDependentProducer<,>), typeof(KafkaDependentProducer<,>));
+        
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {

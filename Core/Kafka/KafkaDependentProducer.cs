@@ -1,34 +1,19 @@
-// Copyright 2020 Confluent Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Refer to LICENSE for more information.
-
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry;
+using Confluent.SchemaRegistry.Serdes;
+using Google.Protobuf;
 
 namespace Core.Kafka;
 
-/// <summary>
-///     Leverages the injected KafkaClientHandle instance to allow
-///     Confluent.Kafka.Message{K,V}s to be produced to Kafka.
-/// </summary>
-public class KafkaDependentProducer<K,V>
+public class KafkaDependentProducer<K, V> : IKafkaDependentProducer<K, V> where V : IMessage<V>, new()
 {
-    IProducer<K, V> kafkaHandle;
+    IProducer<K, V>? kafkaHandle;
+    private KafkaClientHandle _handle;
 
     public KafkaDependentProducer(KafkaClientHandle handle)
     {
-        kafkaHandle = new DependentProducerBuilder<K, V>(handle.Handle).Build();
+        _handle = handle;
     }
 
     /// <summary>
@@ -36,8 +21,8 @@ public class KafkaDependentProducer<K,V>
     ///     via the returned Task. Use this method of producing if you would
     ///     like to await the result before flow of execution continues.
     /// <summary>
-    public Task ProduceAsync(string topic, Message<K, V> message)
-        => kafkaHandle.ProduceAsync(topic, message);
+    public Task? ProduceAsync(string topic, Message<K, V> message)
+        => kafkaHandle?.ProduceAsync(topic, message);
 
     /// <summary>
     ///     Asynchronously produce a message and expose delivery information
@@ -46,8 +31,25 @@ public class KafkaDependentProducer<K,V>
     ///     handle delivery information out-of-band.
     /// </summary>
     public void Produce(string topic, Message<K, V> message, Action<DeliveryReport<K, V>> deliveryHandler = null)
-        => kafkaHandle.Produce(topic, message, deliveryHandler);
+    {
+        var schemaRegistryConfig = new SchemaRegistryConfig
+        {
+            // Note: you can specify more than one schema registry url using the
+            // schema.registry.url property for redundancy (comma separated list). 
+            // The property name is not plural to follow the convention set by
+            // the Java implementation.
+            Url = "http://localhost:8081",
+        };
+
+        using (var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig))
+        {
+            kafkaHandle = new DependentProducerBuilder<K, V>(_handle.Handle)
+                .SetValueSerializer(new ProtobufSerializer<V>(schemaRegistry).AsSyncOverAsync())
+                .Build();
+            kafkaHandle.Produce(topic, message, deliveryHandler);
+        }
+    }
 
     public void Flush(TimeSpan timeout)
-        => kafkaHandle.Flush(timeout);
+        => kafkaHandle?.Flush(timeout);
 }
