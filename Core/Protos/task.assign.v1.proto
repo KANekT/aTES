@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option csharp_namespace = "Proto.V1";
+
+import "base.proto";
+
+message TaskAssignProto {
+  BaseProto base = 1;
+  string publicId = 5;
+  string poPugId = 6;
+  int32 status = 7;
+}

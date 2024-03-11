@@ -1,12 +1,12 @@
+using Analytics.Repositories;
 using Confluent.Kafka;
 using Core;
 using Core.Enums;
 using Core.Kafka;
 using Core.Options;
 using Proto.V1;
-using Tasks.Repositories;
 
-namespace Tasks.Kafka;
+namespace Analytics.Kafka;
 
 public class AccountCreateConsumer : BaseConsumer<Null, AccountCreatedProto>
 {
