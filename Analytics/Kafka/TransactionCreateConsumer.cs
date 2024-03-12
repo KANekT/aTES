@@ -13,7 +13,7 @@ public class TransactionCreateConsumer : BaseConsumer<string, TransactionCreated
 {
     private readonly ITransactionRepository _transactionRepository;
     
-    public TransactionCreateConsumer(IKafkaOptions options, ITransactionRepository transactionRepository) : base(options, Constants.KafkaTopic.TaskStreaming)
+    public TransactionCreateConsumer(IKafkaOptions options, ITransactionRepository transactionRepository) : base(options, Constants.KafkaTopic.BillingStreaming)
     {
         _transactionRepository = transactionRepository;
     }

@@ -22,8 +22,8 @@ public static class Constants
         public const string AccountCreated = "account.created";
         public const string AccountRoleChanged = "account.role_changed";
         public const string TaskCreated = "task.created";
-        public const string TaskAssign = "task.assign";
-        public const string TaskComplete = "task.complete";
+        public const string TaskAssigned = "task.assigned";
+        public const string TaskCompleted = "task.completed";
         public const string TransactionCreated = "transaction.created";
     }
 }

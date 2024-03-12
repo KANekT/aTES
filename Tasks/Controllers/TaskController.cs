@@ -145,7 +145,7 @@ public class TaskController : ControllerBase
             Base = new BaseProto
             {
                 EventId = Guid.NewGuid().ToString("N"),
-                EventName = Constants.KafkaEvent.TaskComplete,
+                EventName = Constants.KafkaEvent.TaskCompleted,
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "1"
             },
@@ -170,7 +170,7 @@ public class TaskController : ControllerBase
             Base = new BaseProto
             {
                 EventId = Guid.NewGuid().ToString("N"),
-                EventName = Constants.KafkaEvent.TaskAssign,
+                EventName = Constants.KafkaEvent.TaskAssigned,
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "1"
             },
@@ -196,7 +196,7 @@ public class TaskController : ControllerBase
                     Base = new BaseProto
                     {
                         EventId = Guid.NewGuid().ToString("N"),
-                        EventName = Constants.KafkaEvent.TaskAssign,
+                        EventName = Constants.KafkaEvent.TaskAssigned,
                         EventTime = DateTime.UtcNow.ToString("u"),
                         EventVersion = "1"
                     },
