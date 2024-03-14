@@ -9,13 +9,13 @@ using Proto.V1;
 
 namespace Accounting.Kafka;
 
-public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
+public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
 {
     private readonly IUserRepository _userRepository;
     private readonly ITaskRepository _taskRepository;
     private readonly ITransactionRepository _transactionRepository;
     
-    public TaskAssignConsumer(IKafkaOptions options, IUserRepository userRepository,
+    public TaskAssignedConsumer(IKafkaOptions options, IUserRepository userRepository,
         ITransactionRepository transactionRepository, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskPropertiesMutation)
     {
         _userRepository = userRepository;
@@ -23,12 +23,12 @@ public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
         _taskRepository = taskRepository;
     }
 
-    protected override async Task Consume(ConsumeResult<string, TaskAssignProto> result, CancellationToken cancellationToken)
+    protected override async Task Consume(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
     {
         await RequestToDb(result, cancellationToken);
     }
 
-    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, TaskAssignProto>> results, CancellationToken cancellationToken)
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, TaskAssignedProto>> results, CancellationToken cancellationToken)
     {
         foreach (var result in results)
         {
@@ -36,7 +36,7 @@ public class TaskAssignConsumer : BaseConsumer<string, TaskAssignProto>
         }
     }
 
-    private async Task RequestToDb(ConsumeResult<string, TaskAssignProto> result, CancellationToken cancellationToken)
+    private async Task RequestToDb(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
     {
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
                       await _taskRepository.Create(new TaskDto

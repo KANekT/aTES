@@ -33,7 +33,7 @@
       <Protobuf Include="Protos\requestTime.v1.proto" ProtoRoot="Protos\"/>
       <Protobuf Include="Protos\requestTime.v2.proto" ProtoRoot="Protos\"/>
       <Protobuf Include="Protos\base.proto" ProtoRoot="Protos\" />
-      <Protobuf Include="Protos\task.assign.v1.proto" ProtoRoot="Protos\" />
+      <Protobuf Include="Protos\task.assigned.v1.proto" ProtoRoot="Protos\" />
       <Protobuf Include="Protos\task.completed.v1.proto" ProtoRoot="Protos\" />
       <Protobuf Include="Protos\task.created.v1.proto" ProtoRoot="Protos\" />
       <Protobuf Include="Protos\task.created.v2.proto" ProtoRoot="Protos\" />

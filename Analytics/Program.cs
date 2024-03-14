@@ -17,7 +17,7 @@ builder.Services.AddCoreBase(builder.Configuration);
 builder.Services.AddHostedService<AccountCreateConsumer>();
 builder.Services.AddHostedService<AccountRoleChangeConsumer>();
 builder.Services.AddHostedService<TaskCreateConsumer>();
-builder.Services.AddHostedService<TaskAssignConsumer>();
+builder.Services.AddHostedService<TaskAssignedConsumer>();
 builder.Services.AddHostedService<TaskCompletedConsumer>();
 builder.Services.AddHostedService<TransactionCreateConsumer>();
 
