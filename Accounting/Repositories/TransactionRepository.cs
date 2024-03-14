@@ -47,12 +47,18 @@ public class TransactionRepository : GenericRepository<TransactionDto>, ITransac
                 Money = transactionDto.Money.ToString("F"),
                 Type = (int)transactionDto.Type
             };
-            
-            _producerTaskCreated.Produce(
-                Constants.KafkaTopic.BillingStreaming,
-                new Message<string, TransactionCreatedProto> { Key = publicId, Value = value },
-                _deliveryReportHandlerTransactionCreated
-            );
+
+            try
+            {
+                await _producerTaskCreated.ProduceAsync(
+                    Constants.KafkaTopic.BillingStreaming,
+                    new Message<string, TransactionCreatedProto> { Key = publicId, Value = value }
+                );
+            }
+            catch (Exception ex)
+            {
+                // Add Error to DB
+            }
         }
         return transactionAdd ? transactionDto : null;
     }
@@ -66,19 +72,5 @@ public class TransactionRepository : GenericRepository<TransactionDto>, ITransac
             .Sum(x => x.Money);
 
         return money > 0 ? money : 0;
-    }
-    
-    private void _deliveryReportHandlerTransactionCreated(DeliveryReport<string, TransactionCreatedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
     }
 }

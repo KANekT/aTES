@@ -75,12 +75,17 @@ public class AccountController : ControllerBase
                 Role = (int)user.Role
             };
 
-            _producerAccountCreated.Produce(
-                Constants.KafkaTopic.AccountStreaming,
-                new Message<Null, AccountCreatedProto> { Value = value },
-                _deliveryReportHandlerAccountCreated
-            );
-            //await _producer.ProduceAsync(_topic, new Message<Null, string> { Value = json });
+            try
+            {
+                await _producerAccountCreated.ProduceAsync(
+                    Constants.KafkaTopic.AccountStreaming,
+                    new Message<Null, AccountCreatedProto> { Value = value }
+                );
+            }
+            catch (Exception ex)
+            {
+                // Add Error to DB
+            }
         }
     }
 
@@ -111,41 +116,20 @@ public class AccountController : ControllerBase
             PublicId = identity.Name,
             Role = (int)model.Role
         };
-        
-        _producerAccountRoleChanged.Produce(
-            Constants.KafkaTopic.AccountRoleChange,
-            new Message<string, AccountRoleChangedProto> { Key = identity.Name, Value = value },
-            _deliveryReportHandlerAccountRoleChanged
-        );
+
+        try
+        {
+            await _producerAccountRoleChanged.ProduceAsync(
+                Constants.KafkaTopic.AccountRoleChange,
+                new Message<string, AccountRoleChangedProto> { Key = identity.Name, Value = value }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
+
 
         return Ok();
-    }
-
-    private void _deliveryReportHandlerAccountCreated(DeliveryReport<Null, AccountCreatedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
-    }
-
-    private void _deliveryReportHandlerAccountRoleChanged(DeliveryReport<string, AccountRoleChangedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
     }
 }

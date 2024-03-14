@@ -35,32 +35,32 @@ public static class KafkaBatchingExtensions
     }
 
     // This override just defaults the `flushTimeout` to 5 seconds
-    public static void ProduceBatch<TKey, TVal>(this IKafkaDependentProducer<TKey, TVal> producer, string topic,
+    public static async Task ProduceBatch<TKey, TVal>(this IKafkaDependentProducer<TKey, TVal> producer, string topic,
         IEnumerable<Message<TKey, TVal>> messages, CancellationTokenSource cts = null) where TVal : IMessage<TVal>, new()
     {
-        producer.ProduceBatch(topic, messages, TimeSpan.FromSeconds(5), cts);
+        await producer.ProduceBatch(topic, messages, TimeSpan.FromSeconds(5), cts);
     }
 
-    private static void ProduceBatch<TKey, TVal>(this IKafkaDependentProducer<TKey, TVal> producer, string topic,
+    private static async Task ProduceBatch<TKey, TVal>(this IKafkaDependentProducer<TKey, TVal> producer, string topic,
         IEnumerable<Message<TKey, TVal>> messages, TimeSpan flushTimeout, CancellationTokenSource cts = null) where TVal : IMessage<TVal>, new()
     {
-        var errorReports = new ConcurrentQueue<DeliveryReport<TKey, TVal>>();
+        var errorReports = new ConcurrentQueue<Message<TKey, TVal>>();
         var reportsExpected = 0;
         var reportsReceived = 0;
 
-        void DeliveryHandler(DeliveryReport<TKey, TVal> report)
-        {
-            Interlocked.Increment(ref reportsReceived);
-
-            if (report.Error.IsError)
-            {
-                errorReports.Enqueue(report);
-            }
-        }
-
         foreach (var message in messages)
         {
-            producer.Produce(topic, message, DeliveryHandler);
+            try
+            {
+                await producer.ProduceAsync(topic, message);
+            }
+            catch (Exception ex)
+            {
+                // Add Error to DB
+                Interlocked.Increment(ref reportsReceived);
+
+                errorReports.Enqueue(message);
+            }
             reportsExpected++;
         }
 
@@ -75,12 +75,14 @@ public static class KafkaBatchingExtensions
 
         if (!errorReports.IsEmpty)
         {
+            /*
             throw new AggregateException($"{errorReports.Count} Kafka produce(s) failed. Up to 10 inner exceptions follow.",
                 errorReports.Take(10).Select(i => new KafkaProduceException(
                     $"A Kafka produce error occurred. Topic: {topic}, Message key: {i.Message.Key}, Code: {i.Error.Code}, Reason: " +
                     $"{i.Error.Reason}, IsBroker: {i.Error.IsBrokerError}, IsLocal: {i.Error.IsLocalError}, IsFatal: {i.Error.IsFatal}"
                 ))
             );
+            */
         }
 
         if (reportsReceived < reportsExpected)

@@ -94,13 +94,19 @@ public class TaskController : ControllerBase
             Title = model.Title,
             PoPugId = poPugId
         };
-            
-        _producerTaskCreatedV1.Produce(
-            Constants.KafkaTopic.TaskStreaming,
-            new Message<string, TaskCreatedProto> { Key = userName, Value = valueV1 },
-            _deliveryReportHandlerTaskCreatedV1
-        );
-        
+
+        try
+        {
+            await _producerTaskCreatedV1.ProduceAsync(
+                Constants.KafkaTopic.TaskStreaming,
+                new Message<string, TaskCreatedProto> { Key = userName, Value = valueV1 }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
+
         var valueV2 = new Proto.V2.TaskCreatedProto
         {
             Base = new BaseProto
@@ -115,12 +121,18 @@ public class TaskController : ControllerBase
             JiraId = model.JiraId,
             PoPugId = poPugId
         };
-            
-        _producerTaskCreatedV2.Produce(
-            Constants.KafkaTopic.TaskStreaming,
-            new Message<string, Proto.V2.TaskCreatedProto> { Key = userName, Value = valueV2 },
-            _deliveryReportHandlerTaskCreatedV2
-        );
+
+        try
+        {
+            await _producerTaskCreatedV2.ProduceAsync(
+                Constants.KafkaTopic.TaskStreaming,
+                new Message<string, Proto.V2.TaskCreatedProto> { Key = userName, Value = valueV2 }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
 
         return Ok();
     }
@@ -175,12 +187,16 @@ public class TaskController : ControllerBase
             Status = (int)TaskMutationEnum.Completed
         };
         
-        _producerTaskCompleted.Produce(
-            Constants.KafkaTopic.TaskPropertiesMutation,
-            new Message<string, TaskCompletedProto> { Key = userName, Value = value },
-            _deliveryReportHandlerTaskCompleted
-        );
-
+        try {
+            await _producerTaskCompleted.ProduceAsync(
+                Constants.KafkaTopic.TaskPropertiesMutation,
+                new Message<string, TaskCompletedProto> { Key = userName, Value = value }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
         return Ok();
     }
     
@@ -200,11 +216,16 @@ public class TaskController : ControllerBase
             Status = (int)TaskMutationEnum.Assign
         };
         
-        _producerTaskAssigned.Produce(
-            Constants.KafkaTopic.TaskPropertiesMutation,
-            new Message<string, TaskAssignedProto> { Key = identityName, Value = value },
-            _deliveryReportHandlerTaskAssign
-        );
+        try {
+            await _producerTaskAssigned.ProduceAsync(
+                Constants.KafkaTopic.TaskPropertiesMutation,
+                new Message<string, TaskAssignedProto> { Key = identityName, Value = value }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
     }
     
     private async Task AssignTasks(string identityName, TaskDto[] tasks, CancellationToken cancellationToken)
@@ -228,7 +249,7 @@ public class TaskController : ControllerBase
         }).ToList();
         
         // copy from https://github.com/confluentinc/confluent-kafka-dotnet/issues/890
-        _producerTaskAssigned.ProduceBatch(Constants.KafkaTopic.TaskPropertiesMutation, messages);
+        await _producerTaskAssigned.ProduceBatch(Constants.KafkaTopic.TaskPropertiesMutation, messages);
 
         /*
         var semaphore = new SemaphoreSlim(0, messages.Count);
@@ -248,60 +269,5 @@ public class TaskController : ControllerBase
     {
         var identity = HttpContext.User.Identity;
         return identity is not { IsAuthenticated: true } ? null : identity.Name;
-    }
-    
-    private void _deliveryReportHandlerTaskCreatedV1(DeliveryReport<string, TaskCreatedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
-    }
-    
-    private void _deliveryReportHandlerTaskCreatedV2(DeliveryReport<string, Proto.V2.TaskCreatedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
-    }
-    
-    private void _deliveryReportHandlerTaskAssign(DeliveryReport<string, TaskAssignedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
-    }
-    private void _deliveryReportHandlerTaskCompleted(DeliveryReport<string, TaskCompletedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
     }
 }
