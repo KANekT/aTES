@@ -4,9 +4,11 @@ option csharp_namespace = "Proto.V1";
 
 import "base.proto";
 
-message TaskAssignedProto {
+message TaskPriceSetProto {
   BaseProto base = 1;
   string publicId = 5;
   string poPugId = 6;
-  int64 time = 7;
+  string lose = 7;
+  string reward = 8;
+  int64 time = 9;
 }

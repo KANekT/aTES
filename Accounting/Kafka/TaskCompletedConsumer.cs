@@ -48,8 +48,9 @@ public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
 
         var transactionType = TransactionTypeEnum.Withdrawal;
         decimal money = taskDto.Reward;
-        
-        await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money, cancellationToken);
+
+        await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money,
+            cancellationToken);
 
         await _userRepository.UpdateBalance(result.Message.Value.PoPugId, money, cancellationToken);
     }

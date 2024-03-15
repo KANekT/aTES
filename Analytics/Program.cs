@@ -17,9 +17,11 @@ builder.Services.AddCoreBase(builder.Configuration);
 builder.Services.AddHostedService<AccountCreateConsumer>();
 builder.Services.AddHostedService<AccountRoleChangeConsumer>();
 builder.Services.AddHostedService<TaskCreateConsumer>();
+builder.Services.AddHostedService<TaskAddedConsumer>();
 builder.Services.AddHostedService<TaskAssignedConsumer>();
 builder.Services.AddHostedService<TaskCompletedConsumer>();
 builder.Services.AddHostedService<TransactionCreateConsumer>();
+builder.Services.AddHostedService<TaskPriceSetConsumer>();
 
 // Add services to the container.
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);

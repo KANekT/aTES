@@ -19,6 +19,7 @@ public class TaskController : ControllerBase
 {
     private readonly IKafkaDependentProducer<string, TaskCreatedProto> _producerTaskCreatedV1;
     private readonly IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> _producerTaskCreatedV2;
+    private readonly IKafkaDependentProducer<string, TaskAddedProto> _producerTaskAdded;
     private readonly IKafkaDependentProducer<string, TaskAssignedProto> _producerTaskAssigned;
     private readonly IKafkaDependentProducer<string, TaskCompletedProto> _producerTaskCompleted;
     private readonly ILogger<TaskController> _logger;
@@ -28,6 +29,7 @@ public class TaskController : ControllerBase
     public TaskController(
         IKafkaDependentProducer<string, TaskCreatedProto> producerTaskCreatedV1,
         IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> producerTaskCreatedV2,
+        IKafkaDependentProducer<string, TaskAddedProto> producerTaskAdded,
         IKafkaDependentProducer<string, TaskAssignedProto> producerTaskAssigned,
         IKafkaDependentProducer<string, TaskCompletedProto> producerTaskCompleted,
         ILogger<TaskController> logger,
@@ -36,6 +38,7 @@ public class TaskController : ControllerBase
     {
         _producerTaskCreatedV1 = producerTaskCreatedV1;
         _producerTaskCreatedV2 = producerTaskCreatedV2;
+        _producerTaskAdded = producerTaskAdded;
         _producerTaskAssigned = producerTaskAssigned;
         _producerTaskCompleted = producerTaskCompleted;
         _logger = logger;
@@ -136,6 +139,8 @@ public class TaskController : ControllerBase
             // Add Error to DB
         }
 
+        await AddedTask(userName, taskDto, cancellationToken);
+
         return Ok();
     }
 
@@ -186,7 +191,6 @@ public class TaskController : ControllerBase
             },
             PublicId = taskPublicId,
             PoPugId = userName,
-            Status = (int)TaskMutationEnum.Completed,
             Time = DateTime.UtcNow.Ticks
         };
         
@@ -203,27 +207,26 @@ public class TaskController : ControllerBase
         return Ok();
     }
     
-    private async Task AssignTask(string identityName, TaskDto task, CancellationToken cancellationToken)
+    private async Task AddedTask(string identityName, TaskDto task, CancellationToken cancellationToken)
     {
-        var value = new TaskAssignedProto
+        var value = new TaskAddedProto
         {
             Base = new BaseProto
             {
                 EventId = Guid.NewGuid().ToString("N"),
-                EventName = Constants.KafkaEvent.TaskAssigned,
+                EventName = Constants.KafkaEvent.TaskAdded,
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "1"
             },
             PublicId = task.Ulid,
             PoPugId = task.PoPugId,
-            Status = (int)TaskMutationEnum.Assign,
             Time = DateTime.UtcNow.Ticks
         };
         
         try {
-            await _producerTaskAssigned.ProduceAsync(
+            await _producerTaskAdded.ProduceAsync(
                 Constants.KafkaTopic.TaskPropertiesMutation,
-                new Message<string, TaskAssignedProto> { Key = identityName, Value = value }
+                new Message<string, TaskAddedProto> { Key = identityName, Value = value }
             );
         }
         catch (Exception ex)
@@ -248,7 +251,6 @@ public class TaskController : ControllerBase
                     },
                     PublicId = task.Ulid,
                     PoPugId = task.PoPugId,
-                    Status = (int)TaskMutationEnum.Assign,
                     Time = DateTime.UtcNow.Ticks
                 }
         }).ToList();

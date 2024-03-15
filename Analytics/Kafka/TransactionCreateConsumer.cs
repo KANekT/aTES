@@ -39,7 +39,7 @@ public class TransactionCreateConsumer : BaseConsumer<string, TransactionCreated
             var transaction = new TransactionDto
             {
                 Ulid = result.Message.Value.PublicId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(result.Message.Value.Time),
                 Type = (TransactionTypeEnum) result.Message.Value.Type,
                 Money = decimal.Parse(result.Message.Value.Money),
                 PoPugId = result.Message.Value.PoPugId

@@ -41,7 +41,7 @@ public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
                       await _taskRepository.Create(new TaskDto
                       {
-                          CreatedAt = DateTime.UtcNow,
+                          CreatedAt = new DateTime(result.Message.Value.Time),
                           EditedAt = DateTime.UtcNow,
                           Ulid = result.Message.Value.PublicId,
                           PoPugId = result.Message.Value.PoPugId,
@@ -49,10 +49,11 @@ public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
                       }, cancellationToken);
 
         var transactionType = TransactionTypeEnum.Enrollment;
-        decimal money = -1 * taskDto.Lose;
-        
-        await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money, cancellationToken);
-        
+        var money = -1 * taskDto.Lose;
+
+        await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money,
+            cancellationToken);
+
         await _userRepository.UpdateBalance(result.Message.Value.PoPugId, money, cancellationToken);
     }
 }

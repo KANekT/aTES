@@ -5,7 +5,9 @@ using Core;
 using Core.Enums;
 using Core.Kafka;
 using Core.Options;
-using Proto.V2;
+using Proto;
+using Proto.V1;
+using TaskCreatedProto = Proto.V2.TaskCreatedProto;
 
 namespace Accounting.Kafka;
 
@@ -14,13 +16,17 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
     private readonly IUserRepository _userRepository;
     private readonly ITaskRepository _taskRepository;
     private readonly ITransactionRepository _transactionRepository;
-
+    
+    private readonly IKafkaDependentProducer<string, TaskPriceSetProto> _producerTaskPriceSet;
+    
     public TaskCreateConsumer(IKafkaOptions options, IUserRepository userRepository,
-        ITransactionRepository transactionRepository, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskStreaming)
+        ITransactionRepository transactionRepository, ITaskRepository taskRepository, IKafkaDependentProducer<string, TaskPriceSetProto> producerTaskPriceSet) : base(options, Constants.KafkaTopic.TaskStreaming)
     {
         _userRepository = userRepository;
         _transactionRepository = transactionRepository;
         _taskRepository = taskRepository;
+        
+        _producerTaskPriceSet = producerTaskPriceSet;
     }
 
     protected override async Task Consume(ConsumeResult<string, TaskCreatedProto> result, CancellationToken cancellationToken)
@@ -44,7 +50,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
             var task = new TaskDto
             {
                 Ulid = result.Message.Value.PublicId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(result.Message.Value.Time),
                 EditedAt = DateTime.UtcNow,
                 Title = result.Message.Value.Title,
                 JiraId = result.Message.Value.JiraId,
@@ -52,6 +58,33 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
             };
 
             taskDto = await _taskRepository.Create(task, cancellationToken);
+            
+            var value = new TaskPriceSetProto
+            {
+                Base = new BaseProto
+                {
+                    EventId = Guid.NewGuid().ToString("N"),
+                    EventName = Constants.KafkaEvent.TaskPriceSet,
+                    EventTime = DateTime.UtcNow.ToString("u"),
+                    EventVersion = "1"
+                },
+                PublicId = task.Ulid,
+                PoPugId = result.Message.Value.PoPugId,
+                Lose = task.Lose.ToString("F"),
+                Reward = task.Reward.ToString("F"),
+                Time = task.CreatedAt.Ticks
+            };
+        
+            try {
+                await _producerTaskPriceSet.ProduceAsync(
+                    Constants.KafkaTopic.TaskPropertiesMutation,
+                    new Message<string, TaskPriceSetProto> { Key = task.Ulid, Value = value }
+                );
+            }
+            catch (Exception ex)
+            {
+                // Add Error to DB
+            }
         }
         else
         {
@@ -59,9 +92,10 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
             taskDto.Title = result.Message.Value.Title;
             await _taskRepository.Update(taskDto, cancellationToken);
         }
-        
+
         var money = -1 * taskDto.Lose;
-        await _transactionRepository.Create(result.Message.Value.PoPugId, TransactionTypeEnum.Init, money, cancellationToken);
+        await _transactionRepository.Create(result.Message.Value.PoPugId, TransactionTypeEnum.Init, money,
+            cancellationToken);
 
         await _userRepository.UpdateBalance(result.Message.Value.PoPugId, money, cancellationToken);
     }

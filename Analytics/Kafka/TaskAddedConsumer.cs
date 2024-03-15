@@ -8,21 +8,21 @@ using Proto.V1;
 
 namespace Analytics.Kafka;
 
-public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
+public class TaskAddedConsumer : BaseConsumer<string, TaskAddedProto>
 {
     private readonly ITaskRepository _taskRepository;
     
-    public TaskAssignedConsumer(IKafkaOptions options, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskPropertiesMutation)
+    public TaskAddedConsumer(IKafkaOptions options, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskPropertiesMutation)
     {
         _taskRepository = taskRepository;
     }
 
-    protected override async Task Consume(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
+    protected override async Task Consume(ConsumeResult<string, TaskAddedProto> result, CancellationToken cancellationToken)
     {
         await RequestToDb(result, cancellationToken);
     }
 
-    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, TaskAssignedProto>> results, CancellationToken cancellationToken)
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, TaskAddedProto>> results, CancellationToken cancellationToken)
     {
         foreach (var result in results)
         {
@@ -30,7 +30,7 @@ public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
         }
     }
 
-    private async Task RequestToDb(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
+    private async Task RequestToDb(ConsumeResult<string, TaskAddedProto> result, CancellationToken cancellationToken)
     {
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
                       await _taskRepository.Create(new TaskDto
