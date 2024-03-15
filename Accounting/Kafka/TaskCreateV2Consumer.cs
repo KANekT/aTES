@@ -6,20 +6,20 @@ using Core.Enums;
 using Core.Kafka;
 using Core.Options;
 using Proto;
-using Proto.V1;
+using Proto.V2;
 
 namespace Accounting.Kafka;
 
-public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
+public class TaskCreateV2Consumer : BaseConsumer<string, TaskCreatedProto>
 {
     private readonly IUserRepository _userRepository;
     private readonly ITaskRepository _taskRepository;
     private readonly ITransactionRepository _transactionRepository;
     
-    private readonly IKafkaDependentProducer<string, TaskPriceSetProto> _producerTaskPriceSet;
+    private readonly IKafkaDependentProducer<string, Proto.V1.TaskPriceSetProto> _producerTaskPriceSet;
     
-    public TaskCreateConsumer(IKafkaOptions options, IUserRepository userRepository,
-        ITransactionRepository transactionRepository, ITaskRepository taskRepository, IKafkaDependentProducer<string, TaskPriceSetProto> producerTaskPriceSet) : base(options, Constants.KafkaTopic.TaskStreaming)
+    public TaskCreateV2Consumer(IKafkaOptions options, IUserRepository userRepository,
+        ITransactionRepository transactionRepository, ITaskRepository taskRepository, IKafkaDependentProducer<string, Proto.V1.TaskPriceSetProto> producerTaskPriceSet) : base(options, Constants.KafkaTopic.TaskStreaming)
     {
         _userRepository = userRepository;
         _transactionRepository = transactionRepository;
@@ -52,12 +52,13 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
                 CreatedAt = new DateTime(result.Message.Value.Time),
                 EditedAt = DateTime.UtcNow,
                 Title = result.Message.Value.Title,
+                JiraId = result.Message.Value.JiraId,
                 PoPugId = result.Message.Value.PoPugId
             };
 
             taskDto = await _taskRepository.Create(task, cancellationToken);
             
-            var value = new TaskPriceSetProto
+            var value = new Proto.V1.TaskPriceSetProto
             {
                 Base = new BaseProto
                 {
@@ -76,7 +77,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
             try {
                 await _producerTaskPriceSet.ProduceAsync(
                     Constants.KafkaTopic.TaskPropertiesMutation,
-                    new Message<string, TaskPriceSetProto> { Key = task.Ulid, Value = value }
+                    new Message<string, Proto.V1.TaskPriceSetProto> { Key = task.Ulid, Value = value }
                 );
             }
             catch (Exception ex)
