@@ -45,7 +45,8 @@ public class TransactionRepository : GenericRepository<TransactionDto>, ITransac
                 PublicId = transactionDto.Ulid,
                 PoPugId = transactionDto.PoPugId,
                 Money = transactionDto.Money.ToString("F"),
-                Type = (int)transactionDto.Type
+                Type = (int)transactionDto.Type,
+                Time = transactionDto.CreatedAt.Ticks
             };
 
             try

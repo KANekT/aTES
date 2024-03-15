@@ -9,4 +9,5 @@ message TaskCompletedProto {
   string publicId = 5;
   string poPugId = 6;
   int32 status = 7;
+  int64 time = 8;
 }

@@ -9,4 +9,5 @@ message TaskCreatedProto {
   string publicId = 5;
   string poPugId = 6;
   string title = 7;
+  int64 time = 8;
 }

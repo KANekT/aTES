@@ -72,7 +72,8 @@ public class AccountController : ControllerBase
                     EventVersion = "1"
                 },
                 PublicId = user.Ulid,
-                Role = (int)user.Role
+                Role = (int)user.Role,
+                Time = DateTime.UtcNow.Ticks
             };
 
             try

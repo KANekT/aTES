@@ -77,8 +77,8 @@ public class TaskController : ControllerBase
         
         var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
 
-        var task = await _taskRepository.Create(model, poPugId, cancellationToken);
-        if (task == null)
+        var taskDto = await _taskRepository.Create(model, poPugId, cancellationToken);
+        if (taskDto == null)
             return BadRequest("task not created");
         
         var valueV1 = new TaskCreatedProto
@@ -90,9 +90,10 @@ public class TaskController : ControllerBase
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "1"
             },
-            PublicId = task.Ulid,
+            PublicId = taskDto.Ulid,
             Title = model.Title,
-            PoPugId = poPugId
+            PoPugId = poPugId,
+            Time = taskDto.CreatedAt.Ticks
         };
 
         try
@@ -116,10 +117,11 @@ public class TaskController : ControllerBase
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "2"
             },
-            PublicId = task.Ulid,
+            PublicId = taskDto.Ulid,
             Title = model.Title,
             JiraId = model.JiraId,
-            PoPugId = poPugId
+            PoPugId = poPugId,
+            Time = taskDto.CreatedAt.Ticks
         };
 
         try
@@ -184,7 +186,8 @@ public class TaskController : ControllerBase
             },
             PublicId = taskPublicId,
             PoPugId = userName,
-            Status = (int)TaskMutationEnum.Completed
+            Status = (int)TaskMutationEnum.Completed,
+            Time = DateTime.UtcNow.Ticks
         };
         
         try {
@@ -213,7 +216,8 @@ public class TaskController : ControllerBase
             },
             PublicId = task.Ulid,
             PoPugId = task.PoPugId,
-            Status = (int)TaskMutationEnum.Assign
+            Status = (int)TaskMutationEnum.Assign,
+            Time = DateTime.UtcNow.Ticks
         };
         
         try {
@@ -244,7 +248,8 @@ public class TaskController : ControllerBase
                     },
                     PublicId = task.Ulid,
                     PoPugId = task.PoPugId,
-                    Status = (int)TaskMutationEnum.Assign
+                    Status = (int)TaskMutationEnum.Assign,
+                    Time = DateTime.UtcNow.Ticks
                 }
         }).ToList();
         
