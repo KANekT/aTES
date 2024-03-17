@@ -10,4 +10,5 @@ message TaskCreatedProto {
   string poPugId = 6;
   string title = 7;
   string jira_id = 8;
+  int64 time = 9;
 }

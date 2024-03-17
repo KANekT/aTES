@@ -21,8 +21,8 @@ public class KafkaDependentProducer<K, V> : IKafkaDependentProducer<K, V> where 
     ///     via the returned Task. Use this method of producing if you would
     ///     like to await the result before flow of execution continues.
     /// <summary>
-    public Task? ProduceAsync(string topic, Message<K, V> message)
-        => kafkaHandle?.ProduceAsync(topic, message);
+    public Task ProduceAsync(string topic, Message<K, V> message)
+        => kafkaHandle?.ProduceAsync(topic, message) ?? throw new Exception("kafka Handle is null");
 
     /// <summary>
     ///     Asynchronously produce a message and expose delivery information

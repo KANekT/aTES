@@ -9,13 +9,13 @@ using Proto.V1;
 
 namespace Accounting.Kafka;
 
-public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
+public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
 {
     private readonly IUserRepository _userRepository;
     private readonly ITaskRepository _taskRepository;
     private readonly ITransactionRepository _transactionRepository;
-
-    public TaskCompletedConsumer(IKafkaOptions options, IUserRepository userRepository,
+    
+    public TaskAssignedConsumer(IKafkaOptions options, IUserRepository userRepository,
         ITransactionRepository transactionRepository, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskPropertiesMutation)
     {
         _userRepository = userRepository;
@@ -23,12 +23,12 @@ public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
         _taskRepository = taskRepository;
     }
 
-    protected override async Task Consume(ConsumeResult<string, TaskCompletedProto> result, CancellationToken cancellationToken)
+    protected override async Task Consume(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
     {
         await RequestToDb(result, cancellationToken);
     }
 
-    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, TaskCompletedProto>> results, CancellationToken cancellationToken)
+    protected override async Task ConsumeBatch(IEnumerable<ConsumeResult<string, TaskAssignedProto>> results, CancellationToken cancellationToken)
     {
         foreach (var result in results)
         {
@@ -36,7 +36,7 @@ public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
         }
     }
 
-    private async Task RequestToDb(ConsumeResult<string, TaskCompletedProto> result, CancellationToken cancellationToken)
+    private async Task RequestToDb(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
     {
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
                       await _taskRepository.Create(result.Message.Value.Time, result.Message.Value.PublicId, cancellationToken);
@@ -44,8 +44,8 @@ public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
         taskDto.PoPugId = result.Message.Value.PoPugId;
         await _taskRepository.Update(taskDto, cancellationToken);
 
-        var transactionType = TransactionTypeEnum.Withdrawal;
-        decimal money = taskDto.Reward;
+        var transactionType = TransactionTypeEnum.Enrollment;
+        var money = -1 * taskDto.Lose;
 
         await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money,
             cancellationToken);

@@ -10,4 +10,5 @@ message TransactionCreatedProto {
   string poPugId = 6;
   string money = 7;
   int32 type = 8;
+  int64 time = 9;
 }

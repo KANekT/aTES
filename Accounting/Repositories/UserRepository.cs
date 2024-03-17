@@ -11,6 +11,17 @@ public class UserRepository : GenericRepository<UserDto>, IUserRepository
        
     }
 
+    public async Task<UserDto> Create(string publicId, CancellationToken cancellationToken)
+    {
+        var userDto = new UserDto
+        {
+            Ulid = publicId,
+            Role = RoleEnum.Default
+        };
+        var userAdd = await Add(userDto, cancellationToken);
+        return userAdd ? userDto : throw new Exception("user is not created");
+    }
+
     public async Task<UserDto?> Create(string publicId, RoleEnum role, CancellationToken cancellationToken)
     {
         var user = await GetByPublicId(publicId, cancellationToken);

@@ -16,8 +16,8 @@ public class AddTaskTable : Migration
             .WithColumn(nameof(TaskDto.EditedAt)).AsDateTime().WithDefault(SystemMethods.CurrentUTCDateTime)
             .WithColumn(nameof(TaskDto.Title)).AsString().NotNullable()
             .WithColumn(nameof(TaskDto.Status)).AsByte().NotNullable().WithDefaultValue((byte)TaskStatusEnum.Open)
-            .WithColumn(nameof(TaskDto.Lose)).AsInt32().NotNullable()
-            .WithColumn(nameof(TaskDto.Reward)).AsInt32().NotNullable()
+            .WithColumn(nameof(TaskDto.Lose)).AsDecimal().Nullable()
+            .WithColumn(nameof(TaskDto.Reward)).AsDecimal().Nullable()
             .WithColumn(nameof(TaskDto.PoPugId)).AsString().NotNullable()
             ;
     }

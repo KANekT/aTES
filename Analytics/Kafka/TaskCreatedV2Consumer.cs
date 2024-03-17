@@ -8,11 +8,11 @@ using Proto.V2;
 
 namespace Analytics.Kafka;
 
-public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
+public class TaskCreatedV2Consumer : BaseConsumer<string, TaskCreatedProto>
 {
     private readonly ITaskRepository _taskRepository;
     
-    public TaskCreateConsumer(IKafkaOptions options, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskStreaming)
+    public TaskCreatedV2Consumer(IKafkaOptions options, ITaskRepository taskRepository) : base(options, Constants.KafkaTopic.TaskStreaming)
     {
         _taskRepository = taskRepository;
     }
@@ -38,7 +38,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
             var task = new TaskDto
             {
                 Ulid = result.Message.Value.PublicId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(result.Message.Value.Time),
                 EditedAt = DateTime.UtcNow,
                 Title = result.Message.Value.Title,
                 JiraId = result.Message.Value.JiraId,

@@ -9,11 +9,11 @@ using Proto.V1;
 
 namespace Analytics.Kafka;
 
-public class TransactionCreateConsumer : BaseConsumer<string, TransactionCreatedProto>
+public class TransactionCreatedConsumer : BaseConsumer<string, TransactionCreatedProto>
 {
     private readonly ITransactionRepository _transactionRepository;
     
-    public TransactionCreateConsumer(IKafkaOptions options, ITransactionRepository transactionRepository) : base(options, Constants.KafkaTopic.TaskStreaming)
+    public TransactionCreatedConsumer(IKafkaOptions options, ITransactionRepository transactionRepository) : base(options, Constants.KafkaTopic.BillingStreaming)
     {
         _transactionRepository = transactionRepository;
     }
@@ -39,7 +39,7 @@ public class TransactionCreateConsumer : BaseConsumer<string, TransactionCreated
             var transaction = new TransactionDto
             {
                 Ulid = result.Message.Value.PublicId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(result.Message.Value.Time),
                 Type = (TransactionTypeEnum) result.Message.Value.Type,
                 Money = decimal.Parse(result.Message.Value.Money),
                 PoPugId = result.Message.Value.PoPugId

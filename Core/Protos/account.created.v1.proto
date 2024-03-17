@@ -8,4 +8,5 @@ message AccountCreatedProto {
   BaseProto base = 1;
   string publicId = 5;
   int32 role = 6;
+  int64 time = 7;
 }
