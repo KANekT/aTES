@@ -8,11 +8,11 @@ using Tasks.Repositories;
 
 namespace Tasks.Kafka;
 
-public class AccountCreateConsumer : BaseConsumer<Null, AccountCreatedProto>
+public class AccountCreatedConsumer : BaseConsumer<Null, AccountCreatedProto>
 {
     private readonly IUserRepository _userRepository;
     
-    public AccountCreateConsumer(IKafkaOptions options, IUserRepository userRepository)
+    public AccountCreatedConsumer(IKafkaOptions options, IUserRepository userRepository)
         : base(options, Constants.KafkaTopic.AccountStreaming)
     {
         _userRepository = userRepository;

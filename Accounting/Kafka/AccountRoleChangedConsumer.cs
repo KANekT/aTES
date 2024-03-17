@@ -8,11 +8,11 @@ using Proto.V1;
 
 namespace Accounting.Kafka;
 
-public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChangedProto>
+public class AccountRoleChangedConsumer : BaseConsumer<string, AccountRoleChangedProto>
 {
     private readonly IUserRepository _userRepository;
     
-    public AccountRoleChangeConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountRoleChange)
+    public AccountRoleChangedConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountRoleChange)
     {
         _userRepository = userRepository;
     }

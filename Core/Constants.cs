@@ -11,7 +11,6 @@ public static class Constants
         
         public const string AccountStreaming = "account_streaming";
         public const string AccountRoleChange = "account_role_change";
-        public const string AccountBalanceChange = "account_balance_change";
         public const string TaskStreaming = "task_streaming";
         public const string TaskPropertiesMutation = "task_properties_mutation";
         public const string BillingStreaming = "billing_streaming";

@@ -14,14 +14,14 @@ var cfg = builder.Configuration.GetConnectionString("postgres");
 
 builder.Services.AddCoreBase(builder.Configuration);
 
-builder.Services.AddHostedService<AccountCreateConsumer>();
-builder.Services.AddHostedService<AccountRoleChangeConsumer>();
-builder.Services.AddHostedService<TaskCreateConsumer>();
-builder.Services.AddHostedService<TaskCreateV2Consumer>();
+builder.Services.AddHostedService<AccountCreatedConsumer>();
+builder.Services.AddHostedService<AccountRoleChangedConsumer>();
+builder.Services.AddHostedService<TaskCreatedConsumer>();
+builder.Services.AddHostedService<TaskCreatedV2Consumer>();
 builder.Services.AddHostedService<TaskAddedConsumer>();
 builder.Services.AddHostedService<TaskAssignedConsumer>();
 builder.Services.AddHostedService<TaskCompletedConsumer>();
-builder.Services.AddHostedService<TransactionCreateConsumer>();
+builder.Services.AddHostedService<TransactionCreatedConsumer>();
 builder.Services.AddHostedService<TaskPriceSetConsumer>();
 
 // Add services to the container.

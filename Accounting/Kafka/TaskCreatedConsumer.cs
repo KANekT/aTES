@@ -10,7 +10,7 @@ using Proto.V1;
 
 namespace Accounting.Kafka;
 
-public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
+public class TaskCreatedConsumer : BaseConsumer<string, TaskCreatedProto>
 {
     private readonly IUserRepository _userRepository;
     private readonly ITaskRepository _taskRepository;
@@ -18,7 +18,7 @@ public class TaskCreateConsumer : BaseConsumer<string, TaskCreatedProto>
     
     private readonly IKafkaDependentProducer<string, TaskPriceSetProto> _producerTaskPriceSet;
     
-    public TaskCreateConsumer(IKafkaOptions options, IUserRepository userRepository,
+    public TaskCreatedConsumer(IKafkaOptions options, IUserRepository userRepository,
         ITransactionRepository transactionRepository, ITaskRepository taskRepository, IKafkaDependentProducer<string, TaskPriceSetProto> producerTaskPriceSet) : base(options, Constants.KafkaTopic.TaskStreaming)
     {
         _userRepository = userRepository;

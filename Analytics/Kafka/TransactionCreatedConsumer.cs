@@ -9,11 +9,11 @@ using Proto.V1;
 
 namespace Analytics.Kafka;
 
-public class TransactionCreateConsumer : BaseConsumer<string, TransactionCreatedProto>
+public class TransactionCreatedConsumer : BaseConsumer<string, TransactionCreatedProto>
 {
     private readonly ITransactionRepository _transactionRepository;
     
-    public TransactionCreateConsumer(IKafkaOptions options, ITransactionRepository transactionRepository) : base(options, Constants.KafkaTopic.BillingStreaming)
+    public TransactionCreatedConsumer(IKafkaOptions options, ITransactionRepository transactionRepository) : base(options, Constants.KafkaTopic.BillingStreaming)
     {
         _transactionRepository = transactionRepository;
     }
