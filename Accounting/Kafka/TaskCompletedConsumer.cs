@@ -39,19 +39,21 @@ public class TaskCompletedConsumer : BaseConsumer<string, TaskCompletedProto>
     private async Task RequestToDb(ConsumeResult<string, TaskCompletedProto> result, CancellationToken cancellationToken)
     {
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
-                      await _taskRepository.Create(new TaskDto
-                      {
-                          Ulid = result.Message.Value.PublicId,
-                          PoPugId = result.Message.Value.PoPugId,
-                          Title = string.Empty
-                      }, cancellationToken);
+                      await _taskRepository.Create(result.Message.Value.Time, result.Message.Value.PublicId, cancellationToken);
+
+        taskDto.PoPugId = result.Message.Value.PoPugId;
+        await _taskRepository.Update(taskDto, cancellationToken);
 
         var transactionType = TransactionTypeEnum.Withdrawal;
         decimal money = taskDto.Reward;
 
         await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money,
             cancellationToken);
+        
+        var user = await _userRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
+                   await _userRepository.Create(result.Message.Value.PublicId, cancellationToken);
 
-        await _userRepository.UpdateBalance(result.Message.Value.PoPugId, money, cancellationToken);
+        user.Balance = money;
+        await _userRepository.Update(user, cancellationToken);
     }
 }

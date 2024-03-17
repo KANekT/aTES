@@ -28,6 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Protobuf Include="Protos\account.added.v1.proto" ProtoRoot="Protos\"/>
       <Protobuf Include="Protos\account.created.v1.proto" ProtoRoot="Protos\"/>
       <Protobuf Include="Protos\account.role.changed.v1.proto" ProtoRoot="Protos\"/>
       <Protobuf Include="Protos\requestTime.v1.proto" ProtoRoot="Protos\"/>

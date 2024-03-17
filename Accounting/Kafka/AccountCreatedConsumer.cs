@@ -11,13 +11,11 @@ namespace Accounting.Kafka;
 public class AccountCreatedConsumer : BaseConsumer<Null, AccountCreatedProto>
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITransactionRepository _transactionRepository;
-
-    public AccountCreatedConsumer(IKafkaOptions options, IUserRepository userRepository, ITransactionRepository transactionRepository)
+    
+    public AccountCreatedConsumer(IKafkaOptions options, IUserRepository userRepository)
         : base(options, Constants.KafkaTopic.AccountStreaming)
     {
         _userRepository = userRepository;
-        _transactionRepository = transactionRepository;
     }
 
     protected override async Task Consume(ConsumeResult<Null, AccountCreatedProto> result, CancellationToken cancellationToken)
@@ -35,8 +33,6 @@ public class AccountCreatedConsumer : BaseConsumer<Null, AccountCreatedProto>
     
     private async Task RequestToDb(ConsumeResult<Null, AccountCreatedProto> result, CancellationToken cancellationToken)
     {
-        await _userRepository.Create(result.Message.Value.PublicId, (RoleEnum)result.Message.Value.Role, cancellationToken);
-
-        await _transactionRepository.Create(result.Message.Value.PublicId, TransactionTypeEnum.Init, 0, cancellationToken);
+        await _userRepository.Create(result.Message.Value.PublicId, (RoleEnum)result.Message.Value.Role, cancellationToken); 
     }
 }

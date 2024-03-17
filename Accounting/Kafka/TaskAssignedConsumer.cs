@@ -39,21 +39,21 @@ public class TaskAssignedConsumer : BaseConsumer<string, TaskAssignedProto>
     private async Task RequestToDb(ConsumeResult<string, TaskAssignedProto> result, CancellationToken cancellationToken)
     {
         var taskDto = await _taskRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
-                      await _taskRepository.Create(new TaskDto
-                      {
-                          CreatedAt = new DateTime(result.Message.Value.Time),
-                          EditedAt = DateTime.UtcNow,
-                          Ulid = result.Message.Value.PublicId,
-                          PoPugId = result.Message.Value.PoPugId,
-                          Title = string.Empty
-                      }, cancellationToken);
+                      await _taskRepository.Create(result.Message.Value.Time, result.Message.Value.PublicId, cancellationToken);
+
+        taskDto.PoPugId = result.Message.Value.PoPugId;
+        await _taskRepository.Update(taskDto, cancellationToken);
 
         var transactionType = TransactionTypeEnum.Enrollment;
         var money = -1 * taskDto.Lose;
 
         await _transactionRepository.Create(result.Message.Value.PoPugId, transactionType, money,
             cancellationToken);
+        
+        var user = await _userRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
+                   await _userRepository.Create(result.Message.Value.PublicId, cancellationToken);
 
-        await _userRepository.UpdateBalance(result.Message.Value.PoPugId, money, cancellationToken);
+        user.Balance = money;
+        await _userRepository.Update(user, cancellationToken);
     }
 }

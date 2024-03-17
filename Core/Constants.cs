@@ -10,6 +10,7 @@ public static class Constants
         public const string RequestTime = "request_times";
         
         public const string AccountStreaming = "account_streaming";
+        public const string AccountPropertiesMutation = "account_properties_mutation";
         public const string AccountRoleChange = "account_role_change";
         public const string TaskStreaming = "task_streaming";
         public const string TaskPropertiesMutation = "task_properties_mutation";
