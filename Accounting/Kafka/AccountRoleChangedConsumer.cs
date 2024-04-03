@@ -8,11 +8,11 @@ using Proto.V1;
 
 namespace Accounting.Kafka;
 
-public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChangedProto>
+public class AccountRoleChangedConsumer : BaseConsumer<string, AccountRoleChangedProto>
 {
     private readonly IUserRepository _userRepository;
     
-    public AccountRoleChangeConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountRoleChange)
+    public AccountRoleChangedConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountRoleChange)
     {
         _userRepository = userRepository;
     }
@@ -32,7 +32,11 @@ public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChanged
     
     private async Task RequestToDb(ConsumeResult<string, AccountRoleChangedProto> result, CancellationToken cancellationToken)
     {
+        var user = await _userRepository.GetByPublicId(result.Message.Value.PublicId, cancellationToken) ??
+                   await _userRepository.Create(result.Message.Value.PublicId, cancellationToken);
+
         var role = (RoleEnum)result.Message.Value.Role;
-        await _userRepository.RoleChange(result.Message.Value.PublicId, role, cancellationToken);
+        user.Role = role;
+        await _userRepository.Update(user, cancellationToken);
     }
 }

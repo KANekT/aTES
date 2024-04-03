@@ -18,7 +18,11 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
         _topic = kafkaTopic;
         _kafkaConsumer = new ConsumerBuilder<TKey, TValue>(options.ConsumerConfig)
             .SetValueDeserializer(new ProtobufDeserializer<TValue>().AsSyncOverAsync())
-            .SetErrorHandler((_, e) => Console.WriteLine($"Error: {e.Reason}"))
+            .SetErrorHandler((_, e) =>
+            {
+                Console.WriteLine($"Error: {e.Reason}");
+                // Add Error to DB
+            })
             .Build();
     }
 
@@ -48,7 +52,7 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
             {
                 // Consumer errors should generally be ignored (or logged) unless fatal.
                 Console.WriteLine($"Consume error: {e.Error.Reason}");
-
+                // Add Error to DB
                 if (e.Error.IsFatal)
                 {
                     // https://github.com/edenhill/librdkafka/blob/master/INTRODUCTION.md#fatal-consumer-errors
@@ -58,6 +62,7 @@ public abstract class BaseConsumer<TKey, TValue> : BackgroundService
             catch (Exception e)
             {
                 Console.WriteLine($"Unexpected error: {e}");
+                // Add Error to DB
                 break;
             }
         }

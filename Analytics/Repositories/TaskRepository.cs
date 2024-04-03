@@ -31,6 +31,6 @@ public class TaskRepository : GenericRepository<TaskDto>, ITaskRepository
             && x.EditedAt.Date <= end
             && x.Status == TaskStatusEnum.Completed
         );
-        return closed.Max(t => t.Reward);
+        return closed.Max(t => t.Reward ?? 0);
     }
 }

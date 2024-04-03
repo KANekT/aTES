@@ -96,18 +96,6 @@ public class RequestTimerMiddleware
                     _deliveryReportHandler
                 );
             }
-
-            // Alternatively, you can await the produce call. This will delay the request until the result of
-            // the produce call is known. An exception will be throw in the event of an error.
-            // await producer.ProduceAsync(topic, new Message<string, long> { Key = context.Request.Path.Value, Value = s.ElapsedMilliseconds });
-        }
-    }
-
-    private void _deliveryReportHandler(DeliveryReport<string, Proto.V1.RequestTimeProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            _logger.Log(LogLevel.Warning, $"Failed to log request time for path: {deliveryReport.Message.Key}");
         }
     }
     

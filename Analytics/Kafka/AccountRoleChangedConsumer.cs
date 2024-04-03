@@ -1,18 +1,18 @@
+using Analytics.Repositories;
 using Confluent.Kafka;
 using Core;
 using Core.Enums;
 using Core.Kafka;
 using Core.Options;
 using Proto.V1;
-using Tasks.Repositories;
 
-namespace Tasks.Kafka;
+namespace Analytics.Kafka;
 
-public class AccountRoleChangeConsumer : BaseConsumer<string, AccountRoleChangedProto>
+public class AccountRoleChangedConsumer : BaseConsumer<string, AccountRoleChangedProto>
 {
     private readonly IUserRepository _userRepository;
     
-    public AccountRoleChangeConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountRoleChange)
+    public AccountRoleChangedConsumer(IKafkaOptions options, IUserRepository userRepository) : base(options, Constants.KafkaTopic.AccountRoleChange)
     {
         _userRepository = userRepository;
     }

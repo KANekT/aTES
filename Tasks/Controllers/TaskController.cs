@@ -17,27 +17,33 @@ namespace Tasks.Controllers;
 [Route("[controller]")]
 public class TaskController : ControllerBase
 {
-    private readonly IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> _producerTaskCreated;
-    private readonly IKafkaDependentProducer<string, TaskAssignProto> _producerTaskAssign;
+    private readonly IKafkaDependentProducer<string, TaskCreatedProto> _producerTaskCreatedV1;
+    private readonly IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> _producerTaskCreatedV2;
+    private readonly IKafkaDependentProducer<string, TaskAddedProto> _producerTaskAdded;
+    private readonly IKafkaDependentProducer<string, TaskAssignedProto> _producerTaskAssigned;
     private readonly IKafkaDependentProducer<string, TaskCompletedProto> _producerTaskCompleted;
     private readonly ILogger<TaskController> _logger;
     private readonly ITaskRepository _taskRepository;
     private readonly IUserRepository _userRepository;
 
     public TaskController(
-        IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> producerTaskCreated,
-        IKafkaDependentProducer<string, TaskAssignProto> producerTaskAssign,
+        IKafkaDependentProducer<string, TaskCreatedProto> producerTaskCreatedV1,
+        IKafkaDependentProducer<string, Proto.V2.TaskCreatedProto> producerTaskCreatedV2,
+        IKafkaDependentProducer<string, TaskAddedProto> producerTaskAdded,
+        IKafkaDependentProducer<string, TaskAssignedProto> producerTaskAssigned,
         IKafkaDependentProducer<string, TaskCompletedProto> producerTaskCompleted,
         ILogger<TaskController> logger,
-        ITaskRepository userRepository,
-        IUserRepository userRepository1)
+        ITaskRepository taskRepository,
+        IUserRepository userRepository)
     {
-        _producerTaskCreated = producerTaskCreated;
-        _producerTaskAssign = producerTaskAssign;
+        _producerTaskCreatedV1 = producerTaskCreatedV1;
+        _producerTaskCreatedV2 = producerTaskCreatedV2;
+        _producerTaskAdded = producerTaskAdded;
+        _producerTaskAssigned = producerTaskAssigned;
         _producerTaskCompleted = producerTaskCompleted;
         _logger = logger;
-        _taskRepository = userRepository;
-        _userRepository = userRepository1;
+        _taskRepository = taskRepository;
+        _userRepository = userRepository;
     }
 
     [HttpPost("[action]")]
@@ -74,11 +80,38 @@ public class TaskController : ControllerBase
         
         var poPugId = await _userRepository.GetRandomPoPugId(cancellationToken);
 
-        var task = await _taskRepository.Create(model, poPugId, cancellationToken);
-        if (task == null)
+        var taskDto = await _taskRepository.Create(model, poPugId, cancellationToken);
+        if (taskDto == null)
             return BadRequest("task not created");
         
-        var value = new Proto.V2.TaskCreatedProto
+        var valueV1 = new TaskCreatedProto
+        {
+            Base = new BaseProto
+            {
+                EventId = Guid.NewGuid().ToString("N"),
+                EventName = Constants.KafkaEvent.TaskCreated,
+                EventTime = DateTime.UtcNow.ToString("u"),
+                EventVersion = "1"
+            },
+            PublicId = taskDto.Ulid,
+            Title = model.Title,
+            PoPugId = poPugId,
+            Time = taskDto.CreatedAt.Ticks
+        };
+
+        try
+        {
+            await _producerTaskCreatedV1.ProduceAsync(
+                Constants.KafkaTopic.TaskStreaming,
+                new Message<string, TaskCreatedProto> { Key = userName, Value = valueV1 }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
+
+        var valueV2 = new Proto.V2.TaskCreatedProto
         {
             Base = new BaseProto
             {
@@ -87,19 +120,26 @@ public class TaskController : ControllerBase
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "2"
             },
-            PublicId = task.Ulid,
+            PublicId = taskDto.Ulid,
             Title = model.Title,
             JiraId = model.JiraId,
-            PoPugId = poPugId
+            PoPugId = poPugId,
+            Time = taskDto.CreatedAt.Ticks
         };
-            
-        _producerTaskCreated.Produce(
-            Constants.KafkaTopic.TaskStreaming,
-            new Message<string, Proto.V2.TaskCreatedProto> { Key = userName, Value = value },
-            _deliveryReportHandlerTaskCreated
-        );
-        
-        await AssignTask(userName, task, cancellationToken);
+
+        try
+        {
+            await _producerTaskCreatedV2.ProduceAsync(
+                Constants.KafkaTopic.TaskStreaming,
+                new Message<string, Proto.V2.TaskCreatedProto> { Key = userName, Value = valueV2 }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
+
+        await AddedTask(userName, taskDto, cancellationToken);
 
         return Ok();
     }
@@ -145,69 +185,78 @@ public class TaskController : ControllerBase
             Base = new BaseProto
             {
                 EventId = Guid.NewGuid().ToString("N"),
-                EventName = Constants.KafkaEvent.TaskComplete,
+                EventName = Constants.KafkaEvent.TaskCompleted,
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "1"
             },
             PublicId = taskPublicId,
             PoPugId = userName,
-            Status = (int)TaskMutationEnum.Completed
+            Time = DateTime.UtcNow.Ticks
         };
         
-        _producerTaskCompleted.Produce(
-            Constants.KafkaTopic.TaskPropertiesMutation,
-            new Message<string, TaskCompletedProto> { Key = userName, Value = value },
-            _deliveryReportHandlerTaskCompleted
-        );
-
+        try {
+            await _producerTaskCompleted.ProduceAsync(
+                Constants.KafkaTopic.TaskPropertiesMutation,
+                new Message<string, TaskCompletedProto> { Key = userName, Value = value }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
         return Ok();
     }
     
-    private async Task AssignTask(string identityName, TaskDto task, CancellationToken cancellationToken)
+    private async Task AddedTask(string identityName, TaskDto task, CancellationToken cancellationToken)
     {
-        var value = new TaskAssignProto
+        var value = new TaskAddedProto
         {
             Base = new BaseProto
             {
                 EventId = Guid.NewGuid().ToString("N"),
-                EventName = Constants.KafkaEvent.TaskAssign,
+                EventName = Constants.KafkaEvent.TaskAdded,
                 EventTime = DateTime.UtcNow.ToString("u"),
                 EventVersion = "1"
             },
             PublicId = task.Ulid,
             PoPugId = task.PoPugId,
-            Status = (int)TaskMutationEnum.Assign
+            Time = DateTime.UtcNow.Ticks
         };
         
-        _producerTaskAssign.Produce(
-            Constants.KafkaTopic.TaskPropertiesMutation,
-            new Message<string, TaskAssignProto> { Key = identityName, Value = value },
-            _deliveryReportHandlerTaskAssign
-        );
+        try {
+            await _producerTaskAdded.ProduceAsync(
+                Constants.KafkaTopic.TaskPropertiesMutation,
+                new Message<string, TaskAddedProto> { Key = identityName, Value = value }
+            );
+        }
+        catch (Exception ex)
+        {
+            // Add Error to DB
+        }
     }
     
     private async Task AssignTasks(string identityName, TaskDto[] tasks, CancellationToken cancellationToken)
     {
-        var messages = tasks.Select(task => new Message<string, TaskAssignProto>
+        var messages = tasks.Select(task => new Message<string, TaskAssignedProto>
         {
             Key = identityName, Value =
-                new TaskAssignProto
+                new TaskAssignedProto
                 {
                     Base = new BaseProto
                     {
                         EventId = Guid.NewGuid().ToString("N"),
-                        EventName = Constants.KafkaEvent.TaskAssign,
+                        EventName = Constants.KafkaEvent.TaskAssigned,
                         EventTime = DateTime.UtcNow.ToString("u"),
                         EventVersion = "1"
                     },
                     PublicId = task.Ulid,
                     PoPugId = task.PoPugId,
-                    Status = (int)TaskMutationEnum.Assign
+                    Time = DateTime.UtcNow.Ticks
                 }
         }).ToList();
         
         // copy from https://github.com/confluentinc/confluent-kafka-dotnet/issues/890
-        _producerTaskAssign.ProduceBatch(Constants.KafkaTopic.TaskPropertiesMutation, messages);
+        await _producerTaskAssigned.ProduceBatch(Constants.KafkaTopic.TaskPropertiesMutation, messages);
 
         /*
         var semaphore = new SemaphoreSlim(0, messages.Count);
@@ -227,45 +276,5 @@ public class TaskController : ControllerBase
     {
         var identity = HttpContext.User.Identity;
         return identity is not { IsAuthenticated: true } ? null : identity.Name;
-    }
-    
-    private void _deliveryReportHandlerTaskCreated(DeliveryReport<string, Proto.V2.TaskCreatedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
-    }
-    private void _deliveryReportHandlerTaskAssign(DeliveryReport<string, TaskAssignProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
-    }
-    private void _deliveryReportHandlerTaskCompleted(DeliveryReport<string, TaskCompletedProto> deliveryReport)
-    {
-        if (deliveryReport.Status == PersistenceStatus.NotPersisted)
-        {
-            // It is common to write application logs to Kafka (note: this project does not provide
-            // an example logger implementation that does this). Such an implementation should
-            // ideally fall back to logging messages locally in the case of delivery problems.
-            _logger.Log(
-                LogLevel.Warning,
-                $"Message delivery failed: {deliveryReport.Message.Value}"
-            );
-        }
     }
 }

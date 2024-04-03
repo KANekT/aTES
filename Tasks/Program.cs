@@ -16,8 +16,8 @@ var cfg = builder.Configuration.GetConnectionString("postgres");
 builder.Services.AddCoreBase(builder.Configuration);
 
 builder.Services.AddHostedService<RequestTimeV1Consumer>();
-builder.Services.AddHostedService<AccountCreateConsumer>();
-builder.Services.AddHostedService<AccountRoleChangeConsumer>();
+builder.Services.AddHostedService<AccountCreatedConsumer>();
+builder.Services.AddHostedService<AccountRoleChangedConsumer>();
 
 // Add services to the container.
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);

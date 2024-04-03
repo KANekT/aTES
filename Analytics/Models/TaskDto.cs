@@ -22,9 +22,9 @@ public record TaskDto
     [Column(nameof(PoPugId))]
     public string PoPugId { get; set; } = string.Empty;
     [Column(nameof(Lose))]
-    public int Lose { get; private set; } = new Random().Next(10, 20);
+    public decimal? Lose { get; set; }
     [Column(nameof(Reward))]
-    public int Reward { get; private set; } = new Random().Next(20, 40);
+    public decimal? Reward { get; set; }
     [Column(nameof(JiraId))]
     public string JiraId { get; set; }
 }

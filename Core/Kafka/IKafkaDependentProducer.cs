@@ -6,6 +6,13 @@ namespace Core.Kafka;
 public interface IKafkaDependentProducer<K,V> where V : IMessage<V>, new()
 {
     /// <summary>
+    ///     Asychronously produce a message and expose delivery information
+    ///     via the returned Task. Use this method of producing if you would
+    ///     like to await the result before flow of execution continues.
+    /// <summary>
+    public Task ProduceAsync(string topic, Message<K, V> message);
+    
+    /// <summary>
     ///     Asynchronously produce a message and expose delivery information
     ///     via the provided callback function. Use this method of producing
     ///     if you would like flow of execution to continue immediately, and

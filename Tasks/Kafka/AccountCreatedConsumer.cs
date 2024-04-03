@@ -1,18 +1,18 @@
-using Analytics.Repositories;
 using Confluent.Kafka;
 using Core;
 using Core.Enums;
 using Core.Kafka;
 using Core.Options;
 using Proto.V1;
+using Tasks.Repositories;
 
-namespace Analytics.Kafka;
+namespace Tasks.Kafka;
 
-public class AccountCreateConsumer : BaseConsumer<Null, AccountCreatedProto>
+public class AccountCreatedConsumer : BaseConsumer<Null, AccountCreatedProto>
 {
     private readonly IUserRepository _userRepository;
     
-    public AccountCreateConsumer(IKafkaOptions options, IUserRepository userRepository)
+    public AccountCreatedConsumer(IKafkaOptions options, IUserRepository userRepository)
         : base(options, Constants.KafkaTopic.AccountStreaming)
     {
         _userRepository = userRepository;
